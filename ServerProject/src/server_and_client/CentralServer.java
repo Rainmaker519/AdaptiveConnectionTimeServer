@@ -3,13 +3,13 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class centralServer extends Thread {
+public class CentralServer extends Thread {
 	
 	private final ServerSocket centralSocket;
 	public final static int maxClients = 8;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
-	public centralServer(int portNumber) throws IOException {
+	public CentralServer(int portNumber) throws IOException {
 		this.centralSocket = new ServerSocket(portNumber);
 		start();
 	}
@@ -17,17 +17,24 @@ public class centralServer extends Thread {
 	@Override
     public void run() {
         while ( !interrupted() ) {
-             //wait for clients
-             Socket connection = this.centralSocket.accept();
-             //should i add the TCP handshake here to verify user connections? TCP will definitely will make the rest of debugging significantly easier
-             //could also be better to do the handshake with the subserver????? this would mean that the delay would be decided before it
-             //might be better to do it here, could use the user class as the SYN packet of the TCP connection
-             
-             //btw the central serverSocket is where the TCP queue is in case I forget
-             
-             
-             //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing I want
-             assignConnectionToSubServer( connection );
+        	//wait for clients
+        	Socket connection;
+			try {
+				connection = this.centralSocket.accept();
+				//should i add the TCP handshake here to verify user connections? TCP will definitely will make the rest of debugging significantly easier
+	            //could also be better to do the handshake with the subserver????? this would mean that the delay would be decided before it
+	            //might be better to do it here, could use the user class as the SYN packet of the TCP connection
+	            
+	            //btw the central serverSocket is where the TCP queue is in case I forget
+	            
+	            
+	            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing I want
+	            assignConnectionToSubServer( connection );
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("CS - Connection Attempt Failed");
+			}
         }
     }
 	
@@ -37,7 +44,6 @@ public class centralServer extends Thread {
 	 */
 	 public void assignConnectionToSubServer( Socket connection ) {
          for ( int i = 0 ; i < maxClients ; i++ ) {
-
              //find an unassigned subserver (waiter)
              if ( this.subServers[ i ] == null ) {
                   this.subServers[ i ] = new SubServer( connection , i , USER_CLASS.FREE);
@@ -92,5 +98,5 @@ public class centralServer extends Thread {
     }
 }
 
-}
+
 

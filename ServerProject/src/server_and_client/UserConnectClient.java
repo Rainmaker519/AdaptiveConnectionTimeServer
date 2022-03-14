@@ -3,7 +3,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class userConnectClient {
+public class UserConnectClient {
 
 	public static void main(String[] args) {
 		//Scanner scanner = new Scanner(System.in);

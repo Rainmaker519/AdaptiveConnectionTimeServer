@@ -2,7 +2,7 @@ package server_and_client;
 import java.io.*;  
 import java.net.*;  
 
-public class serverTesting {
+public class ServerTesting {
 
 	public static void main(String[] args) {
 		System.out.println("Starting Server");
