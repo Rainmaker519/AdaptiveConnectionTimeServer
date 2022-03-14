@@ -76,6 +76,7 @@ public class CentralServer extends Thread {
 				}
 				dout.close(); 
 				din.close();
+				System.out.println("--------------------------------------------------------------");
 				/**
 				if (testString.equals("FREE") || testString.equals("PAID")) {
 					System.out.println("Client Connection SYN Accepted");
@@ -93,6 +94,7 @@ public class CentralServer extends Thread {
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("CS - Connection Attempt Failed");
+				System.out.println("--------------------------------------------------------------");
 			}
         }
     }

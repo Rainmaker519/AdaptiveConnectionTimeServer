@@ -47,9 +47,11 @@ public class UserConnectClient {
 			din.close();
 			
 			client.close();
+			System.out.println("--------------------------------------------------------------");
 		} catch (Exception e) {
 			System.out.println(e);
 			System.out.println("Connection Failed!");
+			System.out.println("--------------------------------------------------------------");
 		}
 	}
 
