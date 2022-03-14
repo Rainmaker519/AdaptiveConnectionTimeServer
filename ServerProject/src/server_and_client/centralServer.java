@@ -1,3 +1,4 @@
+package server_and_client;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -21,6 +22,8 @@ public class centralServer extends Thread {
              //should i add the TCP handshake here to verify user connections? TCP will definitely will make the rest of debugging significantly easier
              //could also be better to do the handshake with the subserver????? this would mean that the delay would be decided before it
              //might be better to do it here, could use the user class as the SYN packet of the TCP connection
+             
+             //btw the central serverSocket is where the TCP queue is in case I forget
              
              
              //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing I want
