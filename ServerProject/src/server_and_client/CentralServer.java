@@ -35,7 +35,7 @@ public class CentralServer extends Thread {
 		boolean notRunYet = true;
         while ( !interrupted() && notRunYet) {
         	//wait for clients
-        	notRunYet = false;
+        	//notRunYet = false;
         	Socket connection;
 			try {
 				connection = this.centralSocket.accept();
