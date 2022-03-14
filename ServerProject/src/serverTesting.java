@@ -16,7 +16,6 @@ public class serverTesting {
 		}
 	}
 	
-	
 	public static boolean start() {
 		try {
 			ServerSocket server = new ServerSocket(6666);
