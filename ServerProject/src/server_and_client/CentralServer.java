@@ -32,8 +32,7 @@ public class CentralServer extends Thread {
 	
 	@Override
     public void run() {
-		boolean notRunYet = true;
-        while ( !interrupted() && notRunYet) {
+        while ( !interrupted() ) {
         	//wait for clients
         	//notRunYet = false;
         	Socket connection;
@@ -56,7 +55,7 @@ public class CentralServer extends Thread {
 				String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
 				
 				System.out.println(synCheck);
-				System.out.println(ackFinalCheckFull);
+				System.out.println(ackFinalCheckSplit[1]);
 				
 				if (!ackFinalCheckSplit[0].equals(synCheck)) {
 					System.out.println("SERVER - Failed user ack check");
@@ -77,19 +76,10 @@ public class CentralServer extends Thread {
 				dout.close(); 
 				din.close();
 				System.out.println("--------------------------------------------------------------");
-				/**
-				if (testString.equals("FREE") || testString.equals("PAID")) {
-					System.out.println("Client Connection SYN Accepted");
-				}
-				**/
-				//should i add the TCP handshake here to verify user connections? TCP will definitely will make the rest of debugging significantly easier
-	            //could also be better to do the handshake with the subserver????? this would mean that the delay would be decided before it
-	            //might be better to do it here, could use the user class as the SYN packet of the TCP connection
 	            
 	            //btw the central serverSocket is where the TCP queue is in case I forget
 	            
-	            
-	            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing I want
+	            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing the system decides
 	            
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -100,7 +90,7 @@ public class CentralServer extends Thread {
     }
 	
 	/**
-	 * Assigns a client connection to one of the subservers, automatically assigns the FREE user class (need to have way to signaling premium somehow or simulating it for testing purposes)
+	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value
 	 * @param connection - Connection accepted at the central server socket
 	 */
 	 public void assignConnectionToSubServer( Socket connection , USER_CLASS uClass) {
