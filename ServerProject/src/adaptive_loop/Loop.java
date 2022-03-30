@@ -1,33 +1,60 @@
 package adaptive_loop;
 
+import java.util.ArrayList;
+
 import server_and_client.CentralServer;
 
 public class Loop {
 	
 	/*
-	 * Only handles connection delay, as processing delay is heavily based on the response time of the user making it a poor metric for average connection delay
+	 * Only uses connection delay as a metric for user delay, as processing delay is heavily based 
+	 * on the response time of the user making it a poor metric for average connection delay.
 	 */
 	
 	public CentralServer server;
+	
+	private ArrayList<Double> freeConnections;
+	private ArrayList<Double> paidConnections;
 
 	public Loop (CentralServer server) {
 		this.server = server;
+		this.freeConnections = new ArrayList<Double>();
+		this.paidConnections = new ArrayList<Double>();
 	}
 	
 	/**
 	 * Monitor part of MAPE-K
 	 * @return - Returns a two dimensional double array, 0 being free and 1 being paid, containing the connection times of all the users within the current time step
 	 */
-	public double[][] monitor() { 
+	public ArrayList<Double>[] monitor() { 
+		@SuppressWarnings("unchecked")
+		ArrayList<Double>[] information = (ArrayList<Double>[])new ArrayList[2];
 		
+		information[0] = this.freeConnections;
+		information[1] = this.paidConnections;
+		
+		this.freeConnections.clear();
+		this.paidConnections.clear();
+		
+		return information;
 	}
 	
 	/**
 	 * Analyze part of MAPE-K
 	 * @return - Returns the average connection delay for free [0] and paid [1] users
 	 */
-	public double[] analyze() {
-		
+	public double[] analyze(ArrayList<Double>[] delays) {
+		double[] averageConnectionDelays = new double[2];
+		double total = 0;
+		for (int i = 0; i < delays.length; i++) {
+			for (double delay : delays[i]) {
+				total += delay;
+			}
+			total = total / delays[i].size();
+			averageConnectionDelays[i] = total;
+			total = 0;
+		}
+		return averageConnectionDelays;
 	}
 	
 	/**
