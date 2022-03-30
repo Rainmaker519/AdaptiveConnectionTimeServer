@@ -23,6 +23,18 @@ public class Loop {
 	}
 	
 	/**
+	 * Runs the entirety of the MAPE-K Loop, call this every S (where S is the length of time intervals used)
+	 * @return - returns true if the loop runs without passing an error
+	 */
+	public boolean run() {
+		ArrayList<Double>[] monitored = monitor();
+		double[] analyzed = analyze(monitored);
+		boolean[] plan = plan(analyzed);
+		execute(plan);
+		return true;
+	}
+	
+	/**
 	 * Monitor part of MAPE-K
 	 * @return - Returns a two dimensional double array, 0 being free and 1 being paid, containing the connection times of all the users within the current time step
 	 */
