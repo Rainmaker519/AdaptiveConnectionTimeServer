@@ -7,12 +7,19 @@ import java.net.Socket;
 
 public class CentralServer extends Thread {
 	
+	public final int maxClients = 8;
 	private final ServerSocket centralSocket;
-	public final static int maxClients = 8;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
-	public CentralServer(int portNumber) throws IOException {
+	public double[] relativeDelayFactors;
+	
+	
+	
+	public CentralServer(int portNumber, double relativeDelayFactorFree, double relativeDelayFactorPaid) throws IOException {
 		this.centralSocket = new ServerSocket(portNumber);
+		this.relativeDelayFactors = new double[2];
+		this.relativeDelayFactors[0] = relativeDelayFactorFree;
+		this.relativeDelayFactors[1] = relativeDelayFactorPaid;
 		start();
 	}
 	
@@ -89,6 +96,38 @@ public class CentralServer extends Thread {
         }
     }
 	
+	public boolean setSubserverNull(int m_id) {
+		if (this.subServers != null) {
+			this.subServers[m_id] = null;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	/**
+	 * 
+	 * @return - an array of ints representing the subservers. 0 if free, 1 if paid, -1 if not in use
+	 */
+	public int[] getSubserverClasses() {
+		int[] result = new int[this.maxClients];
+		for (int i = 0; i < this.maxClients; i++) {
+			if (subServers[i] == null) {
+				result[i] = -1;
+			}
+			else if (subServers[i].userClass == USER_CLASS.FREE) {
+				result[i] = 0;
+			}
+			else {
+				result[i] = 1;
+			}
+		}
+		return result;
+	}
+	
+	//public int[] getNumberSubservers
+	
 	/**
 	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value
 	 * @param connection - Connection accepted at the central server socket
@@ -97,8 +136,8 @@ public class CentralServer extends Thread {
          for ( int i = 0 ; i < maxClients ; i++ ) {
              //find an unassigned subserver (waiter)
              if ( this.subServers[ i ] == null ) {
-                  this.subServers[ i ] = new SubServer( connection , i , uClass);
-                  break;
+                  this.subServers[ i ] = new SubServer( connection , i , uClass, this);
+                  return;
              }
          }
     }
@@ -112,13 +151,15 @@ public class CentralServer extends Thread {
 
         final private int m_id;
         final private Socket subServer;
+        final private CentralServer reference;
 
-        private USER_CLASS userClass;
+        final private USER_CLASS userClass;
 
-        public SubServer( Socket connection , int id , USER_CLASS u_class) {
+        public SubServer( Socket connection , int id , USER_CLASS u_class, CentralServer serverReference) {
             this.m_id = id;
             this.subServer = connection;
             this.userClass = u_class;
+            this.reference = serverReference;
             start();
         }
 
@@ -142,6 +183,7 @@ public class CentralServer extends Thread {
         public void close() {
             try {
                  this.subServer.close();
+                 this.reference.setSubserverNull(m_id);
             } catch ( IOException e ) {
                  //ignore
             }

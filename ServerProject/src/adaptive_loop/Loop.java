@@ -3,6 +3,7 @@ package adaptive_loop;
 import java.util.ArrayList;
 
 import server_and_client.CentralServer;
+import server_and_client.USER_CLASS;
 
 public class Loop {
 	
@@ -72,18 +73,89 @@ public class Loop {
 	/**
 	 * Plan part of MAPE-K, takes average connection delays per class from analyze() as well as the desired relative delays (should be instance var of centralserver)
 	 * @param delaysByClass - Output from analyze() containing average connection delays by user class
-	 * @return An array of booleans representing all of the subservers, if true then means that the subserver should be flipped to serve the other type of user class
+	 * @return 0 if more free needed, 1 if more paid needed, -1 if either fine
 	 */
-	public boolean[] plan(double[] delaysByClass) {
+	public int plan(double[] delaysByClass) {
+		//flipping subservers is a bad idea given that they close and are not able
+		//to be rebound to a different socket
+		//this means the best option is to keep the ratio of free to paid servers
+		//decided in plan, and assign empty subserver slots whichever class
+		//is further away from its intended amount
+		double desiredFreeFactor = this.server.relativeDelayFactors[0];
+		double desiredPaidFactor = this.server.relativeDelayFactors[1];
 		
+		double desiredRatio = desiredFreeFactor / desiredPaidFactor;
+		
+		int[] actualClasses = this.server.getSubserverClasses();
+		int freeNum = 0;
+		int paidNum = 0;
+		for (int i = 0; i < actualClasses.length; i++) {
+			if (actualClasses[i] == 0) {
+				freeNum++;
+			}
+			else if (actualClasses[i] == 1) {
+				paidNum++;
+			}
+		}
+		
+		double actualRatio = freeNum / paidNum;
+		
+		double error = desiredRatio - actualRatio;
+		
+		if (error >= .1) {
+			return 0;
+		}
+		else if (error <= -.1) {
+			return 1;
+		}
+		else {
+			return -1;
+		}
 	}
 	
 	/**
 	 * Based on the plan update the classes that each subserver will serve
 	 * @param plan - The plan created in plan()
 	 */
-	public void execute(boolean[] plan) {
-		
+	public void execute(int plan) {
+		int numUnassignedSubservers = 0;
+		for (int i : this.server.getSubserverClasses()) {
+			if (i == -1) {
+				numUnassignedSubservers++;
+			}
+		}
+		if (numUnassignedSubservers == 0) {
+			//do nothing
+		}
+		else if (numUnassignedSubservers >= 2) {
+			//if more than one free server to assign
+			if (plan == 0) {
+				this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+			}
+			else if (plan == 1) {
+				this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+			}
+			//do rest evenly
+			if (numUnassignedSubservers != 1) {
+				for (int i = 0; i < numUnassignedSubservers-1; i++) {
+					if (i % 2 == 1) {
+						this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+					}
+					else {
+						this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+					}
+				}
+			}
+		}
+		else {
+			//if one free server to assign
+			if (plan == 0) {
+				this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+			}
+			else if (plan == 1) {
+				this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+			}
+		}
 	}
 
 }
