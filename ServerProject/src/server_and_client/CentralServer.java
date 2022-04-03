@@ -4,6 +4,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import adaptive_loop.Loop;
 
 public class CentralServer extends Thread {
 	
@@ -13,6 +17,9 @@ public class CentralServer extends Thread {
 	
 	public double[] relativeDelayFactors;
 	
+	private Queue<Socket> freeQueue;
+	private Queue<Socket> paidQueue;
+	
 	
 	
 	public CentralServer(int portNumber, double relativeDelayFactorFree, double relativeDelayFactorPaid) throws IOException {
@@ -20,81 +27,82 @@ public class CentralServer extends Thread {
 		this.relativeDelayFactors = new double[2];
 		this.relativeDelayFactors[0] = relativeDelayFactorFree;
 		this.relativeDelayFactors[1] = relativeDelayFactorPaid;
+		this.freeQueue = new LinkedList<Socket>();
+		this.paidQueue = new LinkedList<Socket>();
 		start();
 	}
 	
 	
-	/**
-	 THINGS I NEED TO KEEP TRACK OF THAT I ONLY HAVE ACCESS TO DURING run()
-	 
-	 1. TIME THAT THE USER CONNECTION IS accept()'ed, TOGETHER WITH THE USER RECORDING THEIR CONNECTION ATTEMPT TIME I CAN GET THE FULL CONNECTION DELAY
-	  
-	 
-	 2. NEED TO SOMEHOW RECORD TIME USED FOR THIS TCP HANDSHAKE AND HAVE A REFERENCE TO THE SPECIFIC USER INCLUDING THEIR CLASS, MAKES UP FIRST PART OF COMMUNICATION DELAY
-	 (THE OTHER HALF IS THE TIME FOR TRANSMITTING THE HTTP REQUEST AND RESPONSE)
-	 
-	 ~processing delay will need to be recorded in the process() method in subserver
-	 **/
-	
-	
 	@Override
     public void run() {
+		Loop mape_k = new Loop(this);
+		
+		double timeElapsed = 0;
         while ( !interrupted() ) {
-        	//wait for clients
-        	//notRunYet = false;
-        	Socket connection;
-			try {
-				connection = this.centralSocket.accept();
-				System.out.println("SERVER - Client Connection Request Recieved");
-				
-				DataInputStream din = new DataInputStream(connection.getInputStream());
-				String synCheck = din.readUTF();
-				
-				DataOutputStream dout = new DataOutputStream(connection.getOutputStream());  
-				
-				String ackResponse = synCheck + "1";
-				
-				dout.writeUTF(ackResponse);  
-				dout.flush();  
-				
-				
-				String ackFinalCheckFull = din.readUTF();
-				String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
-				
-				System.out.println(synCheck);
-				System.out.println(ackFinalCheckSplit[1]);
-				
-				if (!ackFinalCheckSplit[0].equals(synCheck)) {
-					System.out.println("SERVER - Failed user ack check");
-				}
-				else {
-					if (ackFinalCheckSplit[1].equals("FREE")) {
-						System.out.println("SERVER - Connection to user verified and accepted");
-						assignConnectionToSubServer( connection , USER_CLASS.FREE);
-					}
-					else if (ackFinalCheckSplit[1].equals("PAID")) {
-						System.out.println("SERVER - Connection to user verified and accepted");
-						assignConnectionToSubServer( connection , USER_CLASS.PAID);
-					}
-					else {
-						System.out.println("SERVER - Failed user ack check");
-					}
-				}
-				dout.close(); 
-				din.close();
-				System.out.println("--------------------------------------------------------------");
-	            
-	            //btw the central serverSocket is where the TCP queue is in case I forget
-	            
-	            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing the system decides
-	            
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("CS - Connection Attempt Failed");
-				System.out.println("--------------------------------------------------------------");
-			}
+        	double startTime = System.currentTimeMillis();
+        	while (timeElapsed < 10) {
+        		handleIncomingConnections();
+        		timeElapsed = System.currentTimeMillis() - startTime;
+        	}
+        	mape_k.run();
         }
     }
+	
+	public void handleIncomingConnections() {
+		Socket connection;
+		try {
+			connection = this.centralSocket.accept();
+			System.out.println("SERVER - Client Connection Request Recieved");
+			
+			DataInputStream din = new DataInputStream(connection.getInputStream());
+			String synCheck = din.readUTF();
+			
+			DataOutputStream dout = new DataOutputStream(connection.getOutputStream());  
+			
+			String ackResponse = synCheck + "1";
+			
+			dout.writeUTF(ackResponse);  
+			dout.flush();  
+			
+			
+			String ackFinalCheckFull = din.readUTF();
+			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
+			
+			System.out.println(synCheck);
+			System.out.println(ackFinalCheckSplit[1]);
+			
+			if (!ackFinalCheckSplit[0].equals(synCheck)) {
+				System.out.println("SERVER - Failed user ack check");
+			}
+			else {
+				if (ackFinalCheckSplit[1].equals("FREE")) {
+					System.out.println("SERVER - Connection to free user accepted, adding to service queue");
+					addToFreeQueue(connection);
+					//assignConnectionToSubServer( connection , USER_CLASS.FREE);
+				}
+				else if (ackFinalCheckSplit[1].equals("PAID")) {
+					System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
+					addToPaidQueue(connection);
+					//assignConnectionToSubServer( connection , USER_CLASS.PAID);
+				}
+				else {
+					System.out.println("SERVER - Failed user ack check");
+				}
+			}
+			dout.close(); 
+			din.close();
+			System.out.println("--------------------------------------------------------------");
+            
+            //btw the central serverSocket is where the TCP queue is in case I forget
+            
+            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing the system decides
+            
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("CS - Connection Attempt Failed");
+			System.out.println("--------------------------------------------------------------");
+		}
+	}
 	
 	public boolean setSubserverNull(int m_id) {
 		if (this.subServers != null) {
@@ -104,6 +112,20 @@ public class CentralServer extends Thread {
 		else {
 			return false;
 		}
+	}
+	
+	public void addToFreeQueue(Socket connection) {
+		this.freeQueue.add(connection);
+	}
+	public void addToPaidQueue(Socket connection) {
+		this.paidQueue.add(connection);
+	}
+	
+	public Socket getFreeUser() {
+		return this.freeQueue.poll();
+	}
+	public Socket getPaidUser() {
+		return this.paidQueue.poll();
 	}
 	
 	/**
@@ -132,12 +154,20 @@ public class CentralServer extends Thread {
 	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value
 	 * @param connection - Connection accepted at the central server socket
 	 */
-	 public void assignConnectionToSubServer( Socket connection , USER_CLASS uClass) {
+	 public void assignConnectionToSubServer(USER_CLASS uClass) {
          for ( int i = 0 ; i < maxClients ; i++ ) {
-             //find an unassigned subserver (waiter)
              if ( this.subServers[ i ] == null ) {
-                  this.subServers[ i ] = new SubServer( connection , i , uClass, this);
-                  return;
+            	 if (uClass.equals(USER_CLASS.FREE)) {
+            		 Socket socket = getFreeUser();//next free socket in queue
+            		 this.subServers[ i ] = new SubServer(socket, i , USER_CLASS.FREE, this);
+                     return;
+            	 }
+            	 else {
+            		 Socket socket = getPaidUser();//next paid socket in queue
+            		 this.subServers[ i ] = new SubServer(socket, i , USER_CLASS.PAID, this);
+                     return;
+            	 }
+                  
              }
          }
     }

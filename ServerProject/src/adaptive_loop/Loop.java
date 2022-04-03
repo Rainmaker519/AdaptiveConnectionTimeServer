@@ -30,7 +30,7 @@ public class Loop {
 	public boolean run() {
 		ArrayList<Double>[] monitored = monitor();
 		double[] analyzed = analyze(monitored);
-		boolean[] plan = plan(analyzed);
+		int plan = plan(analyzed);
 		execute(plan);
 		return true;
 	}
@@ -130,19 +130,19 @@ public class Loop {
 		else if (numUnassignedSubservers >= 2) {
 			//if more than one free server to assign
 			if (plan == 0) {
-				this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+				this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 			}
 			else if (plan == 1) {
-				this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+				this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 			}
 			//do rest evenly
 			if (numUnassignedSubservers != 1) {
 				for (int i = 0; i < numUnassignedSubservers-1; i++) {
 					if (i % 2 == 1) {
-						this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+						this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 					}
 					else {
-						this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+						this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 					}
 				}
 			}
@@ -150,10 +150,10 @@ public class Loop {
 		else {
 			//if one free server to assign
 			if (plan == 0) {
-				this.server.assignConnectionToSubServer(null, USER_CLASS.FREE);
+				this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 			}
 			else if (plan == 1) {
-				this.server.assignConnectionToSubServer(null, USER_CLASS.PAID);
+				this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 			}
 		}
 	}
