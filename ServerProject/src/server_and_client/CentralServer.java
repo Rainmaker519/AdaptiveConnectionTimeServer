@@ -11,6 +11,17 @@ import adaptive_loop.Loop;
 
 public class CentralServer extends Thread {
 	
+	/** CURRENT PROGRESS - FOR ME WHEN I COME BACK TO DO MORE!
+	 * THE FIRST TWO CONNECTIONS DO FINE AND SEEM LIKE THE
+	 * TASKS ARE BEING HANDLED PROPERLY BY THE SUBSERVERS
+	 * 
+	 * AFTER THAT IT SEEMS LIKE THERE IS A ISSUE WITH 
+	 * THREADING OR SOMETHING WHERE THE SERVER NO LONGER 
+	 * IS RECIEVING THE REQUESTS AND THE CLIENTS
+	 * ARE STUCK WAITING WITHOUT THEIRS GOING
+	 * THROUGH!
+	 */
+	
 	public final int maxClients = 8;
 	private final ServerSocket centralSocket;
 	private final SubServer[] subServers = new SubServer[maxClients];
@@ -198,6 +209,9 @@ public class CentralServer extends Thread {
              while( !interrupted() ) {
                  //process a client request
                  //this is for you to implement
+            	 System.out.println("SUBSERVER DOING A THING!");
+            	 this.interrupt();
+            	 //this.close();
              }
         }
 
@@ -216,6 +230,8 @@ public class CentralServer extends Thread {
                  this.reference.setSubserverNull(m_id);
             } catch ( IOException e ) {
                  //ignore
+            	e.printStackTrace();
+            	System.out.println("F");
             }
         }
     }

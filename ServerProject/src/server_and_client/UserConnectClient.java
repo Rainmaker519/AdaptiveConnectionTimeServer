@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class UserConnectClient {
 
@@ -46,6 +47,8 @@ public class UserConnectClient {
 			dout.close();  
 			din.close();
 			
+			TimeUnit.SECONDS.sleep(15);
+			
 			client.close();
 			System.out.println("--------------------------------------------------------------");
 		} catch (Exception e) {
@@ -53,6 +56,8 @@ public class UserConnectClient {
 			System.out.println("Connection Failed!");
 			System.out.println("--------------------------------------------------------------");
 		}
+		
+		
 	}
 
 }

@@ -87,8 +87,8 @@ public class Loop {
 		double desiredRatio = desiredFreeFactor / desiredPaidFactor;
 		
 		int[] actualClasses = this.server.getSubserverClasses();
-		int freeNum = 0;
-		int paidNum = 0;
+		double freeNum = 0;
+		double paidNum = 0;
 		for (int i = 0; i < actualClasses.length; i++) {
 			if (actualClasses[i] == 0) {
 				freeNum++;
@@ -98,6 +98,9 @@ public class Loop {
 			}
 		}
 		
+		if (paidNum == 0) {
+			paidNum = 0.0001;
+		}
 		double actualRatio = freeNum / paidNum;
 		
 		double error = desiredRatio - actualRatio;
