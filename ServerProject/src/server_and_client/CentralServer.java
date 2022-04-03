@@ -20,6 +20,13 @@ public class CentralServer extends Thread {
 	 * IS RECIEVING THE REQUESTS AND THE CLIENTS
 	 * ARE STUCK WAITING WITHOUT THEIRS GOING
 	 * THROUGH!
+	 * 
+	 * 
+	 * AFTER MORE TESTING IVE FOUND OUT THAT EVEN AS THE
+	 * CLIENTS ARE BEING ASSIGNED TO THE SUBSERVERS
+	 * THE CONNECTIONS TO THEIR SOCKETS ARE ALREADY CLOSED
+	 * 
+	 * WHY?
 	 */
 	
 	public final int maxClients = 8;
@@ -89,12 +96,10 @@ public class CentralServer extends Thread {
 				if (ackFinalCheckSplit[1].equals("FREE")) {
 					System.out.println("SERVER - Connection to free user accepted, adding to service queue");
 					addToFreeQueue(connection);
-					//assignConnectionToSubServer( connection , USER_CLASS.FREE);
 				}
 				else if (ackFinalCheckSplit[1].equals("PAID")) {
 					System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
 					addToPaidQueue(connection);
-					//assignConnectionToSubServer( connection , USER_CLASS.PAID);
 				}
 				else {
 					System.out.println("SERVER - Failed user ack check");
@@ -104,10 +109,6 @@ public class CentralServer extends Thread {
 			din.close();
 			System.out.println("--------------------------------------------------------------");
             
-            //btw the central serverSocket is where the TCP queue is in case I forget
-            
-            //to implement the adaptive system I need to queue these connections and serve connections to subservers with the timing the system decides
-            
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("CS - Connection Attempt Failed");
@@ -116,7 +117,7 @@ public class CentralServer extends Thread {
 	}
 	
 	public boolean setSubserverNull(int m_id) {
-		if (this.subServers != null) {
+		if (this.subServers[m_id] != null) {
 			this.subServers[m_id] = null;
 			return true;
 		}
@@ -158,8 +159,6 @@ public class CentralServer extends Thread {
 		}
 		return result;
 	}
-	
-	//public int[] getNumberSubservers
 	
 	/**
 	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value
@@ -209,9 +208,17 @@ public class CentralServer extends Thread {
              while( !interrupted() ) {
                  //process a client request
                  //this is for you to implement
-            	 System.out.println("SUBSERVER DOING A THING!");
-            	 this.interrupt();
+            	 
+            	 //this.interrupt();
             	 //this.close();
+            	 if (subServer.isClosed()) {
+            		 this.close();
+            		 System.out.println("SUBSERVER DOING A THING ON A CLOSED CONNECTION?");
+            	 }
+            	 else {
+            		 System.out.println("SUBSERVER DOING A THING!");
+            	 }
+            	 interrupt();
              }
         }
 
@@ -225,14 +232,7 @@ public class CentralServer extends Thread {
          * terminates the connection with this client (i.e. stops serving him)
          */
         public void close() {
-            try {
-                 this.subServer.close();
-                 this.reference.setSubserverNull(m_id);
-            } catch ( IOException e ) {
-                 //ignore
-            	e.printStackTrace();
-            	System.out.println("F");
-            }
+        	this.reference.setSubserverNull(m_id);
         }
     }
 }

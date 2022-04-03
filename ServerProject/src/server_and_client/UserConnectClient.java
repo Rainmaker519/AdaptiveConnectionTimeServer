@@ -47,14 +47,18 @@ public class UserConnectClient {
 			dout.close();  
 			din.close();
 			
-			TimeUnit.SECONDS.sleep(15);
+			System.out.println("waiting");
+			TimeUnit.SECONDS.sleep(20);
+			System.out.println("waited");
 			
-			client.close();
+			
+			//client.close();
 			System.out.println("--------------------------------------------------------------");
 		} catch (Exception e) {
 			System.out.println(e);
 			System.out.println("Connection Failed!");
 			System.out.println("--------------------------------------------------------------");
+			
 		}
 		
 		
