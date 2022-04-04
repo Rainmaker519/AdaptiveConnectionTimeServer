@@ -27,6 +27,10 @@ public class CentralServer extends Thread {
 	 * THE CONNECTIONS TO THEIR SOCKETS ARE ALREADY CLOSED
 	 * 
 	 * WHY?
+	 * 
+	 * MIGHT BE BECAUSE MAPE-K IS ASSIGNING SUBSERVERS EVEN IN THE CASE THAT 
+	 * THE QUEUES ARE EMPTY!!!!!
+	 * CHECK THIS OUT!!!!
 	 */
 	
 	public final int maxClients = 8;
@@ -53,16 +57,26 @@ public class CentralServer extends Thread {
 	
 	@Override
     public void run() {
+		System.out.println("<-----------######### 0");
 		Loop mape_k = new Loop(this);
-		
 		double timeElapsed = 0;
+		System.out.println("<-----------######### 1");
         while ( !interrupted() ) {
+        	System.out.println("<-----------######### 2");
         	double startTime = System.currentTimeMillis();
-        	while (timeElapsed < 10) {
+        	while (timeElapsed < 5) {
         		handleIncomingConnections();
         		timeElapsed = System.currentTimeMillis() - startTime;
+        		System.out.println("<-----------######### 3 [" + timeElapsed + "]");
         	}
+        	System.out.println("<-----------######### 4");
         	mape_k.run();
+        	System.out.println("<-----------######### 5");
+        	System.out.println("==========");
+        	double[] ratios = mape_k.getLoopInstanceRatios();
+        	int[] countsAndPlan = mape_k.getLoopInstanceCountsPlusPlan();
+        	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[3] + "]");
+        	System.out.println("==========");
         }
     }
 	
@@ -134,10 +148,27 @@ public class CentralServer extends Thread {
 	}
 	
 	public Socket getFreeUser() {
-		return this.freeQueue.poll();
+		if (!this.freeQueue.isEmpty()) {
+			return this.freeQueue.poll();
+		}
+		else {
+			return null;
+		}
 	}
 	public Socket getPaidUser() {
-		return this.paidQueue.poll();
+		if (!this.paidQueue.isEmpty()) {
+			return this.paidQueue.poll();
+		}
+		else {
+			return null;
+		}
+	}
+	
+	public int getFreeQueueLength() {
+		return this.freeQueue.size();
+	}
+	public int getPaidQueueLength() {
+		return this.paidQueue.size();
 	}
 	
 	/**
@@ -212,6 +243,9 @@ public class CentralServer extends Thread {
             	 //this.interrupt();
             	 //this.close();
             	 if (subServer.isClosed()) {
+            		 System.out.println(reference.freeQueue);
+            		 System.out.println(reference.paidQueue);
+            		 System.out.println(this.userClass);
             		 this.close();
             		 System.out.println("SUBSERVER DOING A THING ON A CLOSED CONNECTION?");
             	 }
@@ -232,6 +266,12 @@ public class CentralServer extends Thread {
          * terminates the connection with this client (i.e. stops serving him)
          */
         public void close() {
+        	try {
+				this.subServer.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         	this.reference.setSubserverNull(m_id);
         }
     }

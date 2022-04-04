@@ -16,11 +16,21 @@ public class Loop {
 	
 	private ArrayList<Double> freeConnections;
 	private ArrayList<Double> paidConnections;
+	
+	
+	private double desiredRatio_;
+	private double actualRatio_;
+	private int[] actualCounts_;
+	private int plan_;
 
 	public Loop (CentralServer server) {
 		this.server = server;
 		this.freeConnections = new ArrayList<Double>();
 		this.paidConnections = new ArrayList<Double>();
+		this.desiredRatio_ = -1;
+		this.actualRatio_ = -1;
+		this.actualCounts_ = new int[] {-1,-1};
+		this.plan_ = -5;
 	}
 	
 	/**
@@ -33,6 +43,26 @@ public class Loop {
 		int plan = plan(analyzed);
 		execute(plan);
 		return true;
+	}
+	
+	public double[] getLoopInstanceRatios() {
+		if (this.desiredRatio_ == -1 || this.actualRatio_ == -1) {
+			return new double[] {-1,-1};
+		}
+		else {
+			return new double[] {this.desiredRatio_,this.actualRatio_};
+		}
+		
+	}
+	
+	public int[] getLoopInstanceCountsPlusPlan() {
+		if (this.actualCounts_[0] == -1 || this.actualCounts_[1] == -1 || this.plan_ == -5) {
+			return new int[] {this.actualCounts_[0], this.actualCounts_[1], this.plan_};
+		}
+		else {
+			return new int[] {this.actualCounts_[0], this.actualCounts_[1], this.plan_};
+		}
+		
 	}
 	
 	/**
@@ -85,6 +115,7 @@ public class Loop {
 		double desiredPaidFactor = this.server.relativeDelayFactors[1];
 		
 		double desiredRatio = desiredFreeFactor / desiredPaidFactor;
+		this.desiredRatio_ = desiredRatio;
 		
 		int[] actualClasses = this.server.getSubserverClasses();
 		double freeNum = 0;
@@ -97,11 +128,14 @@ public class Loop {
 				paidNum++;
 			}
 		}
+		this.actualCounts_[0] = (int)freeNum;
+		this.actualCounts_[1] = (int)paidNum;
 		
 		if (paidNum == 0) {
 			paidNum = 0.0001;
 		}
 		double actualRatio = freeNum / paidNum;
+		this.actualRatio_ = actualRatio;
 		
 		double error = desiredRatio - actualRatio;
 		
@@ -121,41 +155,46 @@ public class Loop {
 	 * @param plan - The plan created in plan()
 	 */
 	public void execute(int plan) {
+		this.plan_ = plan;
+		
 		int numUnassignedSubservers = 0;
 		for (int i : this.server.getSubserverClasses()) {
 			if (i == -1) {
 				numUnassignedSubservers++;
 			}
 		}
+		//System.out.println("Execute: " + numUnassignedSubservers);
 		if (numUnassignedSubservers == 0) {
 			//do nothing
 		}
 		else if (numUnassignedSubservers >= 2) {
 			//if more than one free server to assign
-			if (plan == 0) {
+			if (plan == 0 && this.server.getFreeQueueLength() > 0) {
 				this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 			}
-			else if (plan == 1) {
+			else if (plan == 1 && this.server.getPaidQueueLength() > 0) {
 				this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 			}
 			//do rest evenly
 			if (numUnassignedSubservers != 1) {
 				for (int i = 0; i < numUnassignedSubservers-1; i++) {
-					if (i % 2 == 1) {
+					if (i % 2 == 1 && this.server.getFreeQueueLength() > 0) {
 						this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 					}
 					else {
-						this.server.assignConnectionToSubServer(USER_CLASS.PAID);
+						if (this.server.getPaidQueueLength() > 0) {
+							this.server.assignConnectionToSubServer(USER_CLASS.PAID);
+						}
 					}
 				}
 			}
 		}
 		else {
 			//if one free server to assign
-			if (plan == 0) {
+			if (plan == 0 && this.server.getFreeQueueLength() > 0) {
 				this.server.assignConnectionToSubServer(USER_CLASS.FREE);
 			}
-			else if (plan == 1) {
+			else if (plan == 1 && this.server.getPaidQueueLength() > 0) {
 				this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 			}
 		}
