@@ -101,16 +101,12 @@ public class Loop {
 	}
 	
 	/**
-	 * Plan part of MAPE-K, takes average connection delays per class from analyze() as well as the desired relative delays (should be instance var of centralserver)
+	 * Plan part of MAPE-K, takes average connection delays per class from analyze() 
+	 * as well as the desired relative delays (should be instance var of centralserver)
 	 * @param delaysByClass - Output from analyze() containing average connection delays by user class
 	 * @return 0 if more free needed, 1 if more paid needed, -1 if either fine
 	 */
 	public int plan(double[] delaysByClass) {
-		//flipping subservers is a bad idea given that they close and are not able
-		//to be rebound to a different socket
-		//this means the best option is to keep the ratio of free to paid servers
-		//decided in plan, and assign empty subserver slots whichever class
-		//is further away from its intended amount
 		double desiredFreeFactor = this.server.relativeDelayFactors[0];
 		double desiredPaidFactor = this.server.relativeDelayFactors[1];
 		
