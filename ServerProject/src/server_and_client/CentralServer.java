@@ -35,7 +35,7 @@ public class CentralServer extends Thread {
 	 * [TESTING TO SEE IF ADDING A GPG KEY WILL LET MY COMMITS
 	 * SHOW UP AS CONTRIBUTIONS ON MY PROFILE]
 	 * 
-	 * gpg testing
+	 * gpg testing - final
 	 */
 	
 	public final int maxClients = 7;
