@@ -36,7 +36,7 @@ class Test_centralServer {
 			}
 			
 			
-			TimeUnit.SECONDS.sleep(25);
+			TimeUnit.SECONDS.sleep(10);
 			c.interrupt();
 		}
 		catch(Exception e) {

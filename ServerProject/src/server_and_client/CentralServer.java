@@ -33,7 +33,7 @@ public class CentralServer extends Thread {
 	 * TO HANDLE USER REQUESTS
 	 */
 	
-	public final int maxClients = 8;
+	public final int maxClients = 7;
 	private final ServerSocket centralSocket;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
@@ -74,6 +74,7 @@ public class CentralServer extends Thread {
         	int[] countsAndPlan = mape_k.getLoopInstanceCountsPlusPlan();
         	System.out.println("FQL: " + this.getFreeQueueLength() + "| PQL: " + this.getPaidQueueLength());
         	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[2] + "]");
+        	System.out.println("CServerClosedStatus: " + this.centralSocket.isClosed());
         	System.out.println("==========");
         	
         	startTime = System.currentTimeMillis();
@@ -85,6 +86,7 @@ public class CentralServer extends Thread {
 		Socket connection;
 		try {
 			connection = this.centralSocket.accept();
+			
 			//connection.setKeepAlive(true);
 			//System.out.println("SERVER - Client Connection Request Recieved");
 			
@@ -97,7 +99,6 @@ public class CentralServer extends Thread {
 			
 			dout.writeUTF(ackResponse);  
 			dout.flush();  
-			
 			
 			String ackFinalCheckFull = din.readUTF();
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
@@ -121,14 +122,13 @@ public class CentralServer extends Thread {
 					System.out.println("SERVER - Failed user ack check");
 				}
 			}
-			dout.close(); 
-			din.close();
-			//System.out.println("--------------------------------------------------------------");
+			//dout.close(); 
+			//din.close();
+			//If I close these here the connection is closed entirely as well
             
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("CS - Connection Attempt Failed");
-			//System.out.println("--------------------------------------------------------------");
 		}
 	}
 	
@@ -245,15 +245,19 @@ public class CentralServer extends Thread {
             	 //this.interrupt();
             	 //this.close();
             	 if (subServer.isClosed()) {
-            		 //System.out.println(reference.freeQueue);
-            		 //System.out.println(reference.paidQueue);
-            		 //System.out.println(this.userClass);
-            		 //this.close();
+
             		 System.out.println("SUBSERVER DOING A THING ON A CLOSED CONNECTION?");
             	 }
             	 else {
-            		 System.out.println("SUBSERVER DOING A THING!");
+            		 System.out.println("Server_Operation_" + this.m_id);
             	 }
+            	 try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            	 close();
             	 interrupt();
             	 //this.reference.setSubserverNull(this.m_id);
              }
