@@ -36,6 +36,14 @@ public class CentralServer extends Thread {
 	 * SHOW UP AS CONTRIBUTIONS ON MY PROFILE]
 	 * 
 	 * gpg testing - final
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * ADD SOMETHING TO SAVE THE RATIO OF SUBSERVERS FROM THE PREVIOUS LOOP OR SOMETHING,				!!!!!!!!!!
+	 * CURRENTLY THE SUBSERVERS ARE FREQUENTLY EMPTY WHEN MONITOR CHECKS THE RATIO FOR ADAPTING			!!!!!!!!!!
 	 */
 	
 	public final int maxClients = 7;
@@ -47,6 +55,8 @@ public class CentralServer extends Thread {
 	private Queue<Socket> freeQueue;
 	private Queue<Socket> paidQueue;
 	
+	private int requestsHandledCount;
+	
 	
 	
 	public CentralServer(int portNumber, double relativeDelayFactorFree, double relativeDelayFactorPaid) throws IOException {
@@ -56,6 +66,9 @@ public class CentralServer extends Thread {
 		this.relativeDelayFactors[1] = relativeDelayFactorPaid;
 		this.freeQueue = new LinkedList<Socket>();
 		this.paidQueue = new LinkedList<Socket>();
+		
+		this.requestsHandledCount = 0;
+		
 		start();
 	}
 	
@@ -65,9 +78,9 @@ public class CentralServer extends Thread {
 		Loop mape_k = new Loop(this);
 		double timeElapsed = 0;
         while ( !interrupted() ) {
-        	//System.out.println("-------------------------------------------------------");
+        	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
-        	while (timeElapsed < 5) {
+        	while (timeElapsed < 50) {
         		handleIncomingConnections();
         		timeElapsed = System.currentTimeMillis() - startTime;
         		//System.out.println("---------------------");
@@ -80,11 +93,13 @@ public class CentralServer extends Thread {
         	System.out.println("FQL: " + this.getFreeQueueLength() + "| PQL: " + this.getPaidQueueLength());
         	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[2] + "]");
         	System.out.println("CServerClosedStatus: " + this.centralSocket.isClosed());
+        	System.out.println("Total Requests Handled: " + this.requestsHandledCount);
         	System.out.println("==========");
         	
         	startTime = System.currentTimeMillis();
         	timeElapsed = 0;
         }
+        System.out.println("QQQQQQQQQQ(CSERVER INTERRUPTED)QQQQQQQQQQ");
     }
 	
 	public void handleIncomingConnections() {
@@ -254,7 +269,8 @@ public class CentralServer extends Thread {
             		 System.out.println("SUBSERVER DOING A THING ON A CLOSED CONNECTION?");
             	 }
             	 else {
-            		 System.out.println("Server_Operation_" + this.m_id);
+            		 System.out.println("Server_Operation_" + this.m_id + "_" + this.userClass);
+            		 this.reference.requestsHandledCount++;
             	 }
             	 try {
 					Thread.sleep(500);

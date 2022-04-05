@@ -21,12 +21,12 @@ class Test_centralServer {
 	@Test
 	void testRun() {
 		try {
-			CentralServer c = new CentralServer(6666,1,1.01);
+			CentralServer c = new CentralServer(6666,2,1.01);
 			int l = 0; 
 			
 			while (l < 500) {
 				double ran = Math.random() * 100;
-				if (ran >= 50) {
+				if (ran >= 40) {
 					clientConnect(USER_CLASS.FREE);
 				}
 				else {
@@ -37,6 +37,13 @@ class Test_centralServer {
 			
 			
 			TimeUnit.SECONDS.sleep(10);
+			clientConnect(USER_CLASS.FREE);
+			TimeUnit.SECONDS.sleep(1);
+			clientConnect(USER_CLASS.PAID);
+			clientConnect(USER_CLASS.PAID);
+			clientConnect(USER_CLASS.PAID);
+			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(1);
 			c.interrupt();
 		}
 		catch(Exception e) {
