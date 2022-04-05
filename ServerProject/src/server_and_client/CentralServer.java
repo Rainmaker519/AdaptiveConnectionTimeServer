@@ -44,6 +44,15 @@ public class CentralServer extends Thread {
 	 * 
 	 * ADD SOMETHING TO SAVE THE RATIO OF SUBSERVERS FROM THE PREVIOUS LOOP OR SOMETHING,				!!!!!!!!!!
 	 * CURRENTLY THE SUBSERVERS ARE FREQUENTLY EMPTY WHEN MONITOR CHECKS THE RATIO FOR ADAPTING			!!!!!!!!!!
+	 * 
+	 * 
+	 * 
+	 * 
+	 * ALSO, EVERYTHING BROKE WHEN I ADDED A USER REQUEST AND SERVER RESPONSE AS THE 
+	 * SUBSERVER FUNCTION, STALLING WAITING FOR USER INPUT PROBABLY
+	 * 
+	 * PROB THE TWO SUBSERVER PROCESSES I DIDNT COULDNT ACCOUNT FOR BEFORE
+	 * FIGURE OUT WHERE THOSE ARE
 	 */
 	
 	public final int maxClients = 7;
@@ -81,10 +90,13 @@ public class CentralServer extends Thread {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
         	while (timeElapsed < 50) {
+        		System.out.println("testos2");//not even making it here?
         		handleIncomingConnections();
+        		System.out.println("testos3");//not even making it here?
         		timeElapsed = System.currentTimeMillis() - startTime;
         		//System.out.println("---------------------");
         	}
+        	System.out.println("testos4");//not even making it here?
         	mape_k.run();
         	
         	System.out.println("==========");
@@ -243,14 +255,14 @@ public class CentralServer extends Thread {
 	protected class SubServer extends Thread {
 
         final private int m_id;
-        final private Socket subServer;
+        final private Socket subServerSocket;
         final private CentralServer reference;
 
         final private USER_CLASS userClass;
 
         public SubServer( Socket connection , int id , USER_CLASS u_class, CentralServer serverReference) {
             this.m_id = id;
-            this.subServer = connection;
+            this.subServerSocket = connection;
             this.userClass = u_class;
             this.reference = serverReference;
             start();
@@ -260,24 +272,49 @@ public class CentralServer extends Thread {
         public void run() {
              while( !interrupted() ) {
                  //process a client request
-                 //this is for you to implement
-            	 
-            	 //this.interrupt();
-            	 //this.close();
-            	 if (subServer.isClosed()) {
-
-            		 System.out.println("SUBSERVER DOING A THING ON A CLOSED CONNECTION?");
+            	 if (subServerSocket.isClosed()) {
+            		 System.out.println("SUBSERVER DOING NOTHING ON A CLOSED CONNECTION?");
+            		 close();
+                	 interrupt();
+                	 return;
             	 }
             	 else {
             		 System.out.println("Server_Operation_" + this.m_id + "_" + this.userClass);
-            		 this.reference.requestsHandledCount++;
             	 }
+            	 
+            	 try {
+            		 DataOutputStream dout = new DataOutputStream(subServerSocket.getOutputStream());  
+            		 DataInputStream din = new DataInputStream(subServerSocket.getInputStream());
+            		 
+            		 //System.out.println("Testos");
+            		 
+            		 String request = din.readUTF();
+            		 
+            		 if (request.equals("GM")) {
+            			 dout.writeUTF("Good Morning User-" + this.m_id + "!");
+            			 dout.flush();
+            		 }
+            		 else if (request.equals("GN")) {
+            			 dout.writeUTF("Good Night User-" + this.m_id + "!");
+            			 dout.flush();
+            		 }
+            		 else {
+            			 dout.writeUTF("Please use \"GM\" or \"GN\" User-" + this.m_id + "!");
+            			 dout.flush();
+            		 }
+            	 } catch (Exception e) {
+            		 System.out.println("Socket open but streams broken???");
+            	 }
+            	 
+            	 /*
             	 try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				*/
+            	 this.reference.requestsHandledCount++;
             	 close();
             	 interrupt();
             	 //this.reference.setSubserverNull(this.m_id);
@@ -295,7 +332,7 @@ public class CentralServer extends Thread {
          */
         public void close() {
         	try {
-				this.subServer.close();
+				this.subServerSocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

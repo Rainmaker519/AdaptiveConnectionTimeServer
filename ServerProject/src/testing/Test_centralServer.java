@@ -96,7 +96,24 @@ class Test_centralServer {
 			}
 			else {
 				System.out.println("client userclass unknown");
+				dout.close();  
+				din.close();
 			}
+			
+			double r = Math.random() * 100;
+			if (r >50) {
+				dout.writeUTF("GM");
+				dout.flush();
+			}
+			else {
+				dout.writeUTF("GN");
+				dout.flush();
+			}
+			
+			System.out.println(din.readUTF());
+			//din.close();
+			//dout.close();
+			
 			return;
 			
 		} catch (Exception e) {
