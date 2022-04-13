@@ -53,6 +53,15 @@ public class CentralServer extends Thread {
 	 * 
 	 * PROB THE TWO SUBSERVER PROCESSES I DIDNT COULDNT ACCOUNT FOR BEFORE
 	 * FIGURE OUT WHERE THOSE ARE
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * NOPE!!! ITS BLOCKING AT THE ACCEPT METHOD IN handleIncomingConnections() 
+	 * BECAUSE MY SHIT TEST METHOD IS ONLY ACTUALLY SENDING ONE CONNECTION REQUEST
+	 * FOR SOME REASON IDK WHY YET
 	 */
 	
 	public final int maxClients = 7;
@@ -89,6 +98,8 @@ public class CentralServer extends Thread {
         while ( !interrupted() ) {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
+        	//Maybe just need to pull either the loop or the handling of incoming connections into 
+        	//its own thread
         	while (timeElapsed < 50) {
         		System.out.println("testos2");//not even making it here?
         		handleIncomingConnections();
@@ -117,10 +128,11 @@ public class CentralServer extends Thread {
 	public void handleIncomingConnections() {
 		Socket connection;
 		try {
+			//System.out.println(this.centralSocket.getLocalPort());
 			connection = this.centralSocket.accept();
 			
 			//connection.setKeepAlive(true);
-			//System.out.println("SERVER - Client Connection Request Recieved");
+			System.out.println("SERVER - Client Connection Request Recieved");
 			
 			DataInputStream din = new DataInputStream(connection.getInputStream());
 			String synCheck = din.readUTF();
@@ -135,20 +147,24 @@ public class CentralServer extends Thread {
 			String ackFinalCheckFull = din.readUTF();
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
 			
-			//System.out.println(synCheck);
-			//System.out.println(ackFinalCheckSplit[1]);
+			System.out.println(synCheck);
+			System.out.println(ackFinalCheckSplit[1]);
 			
 			if (!ackFinalCheckSplit[0].equals(synCheck)) {
 				//System.out.println("SERVER - Failed user ack check");
 			}
 			else {
 				if (ackFinalCheckSplit[1].equals("FREE")) {
-					//System.out.println("SERVER - Connection to free user accepted, adding to service queue");
-					addToFreeQueue(connection);
+					System.out.println("SERVER - Connection to free user accepted, adding to service queue");
+					if (addToFreeQueue(connection)) {
+						System.out.println("Successfully added to free queue");
+					}
 				}
 				else if (ackFinalCheckSplit[1].equals("PAID")) {
-					//System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
-					addToPaidQueue(connection);
+					System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
+					if (addToPaidQueue(connection)) {
+						System.out.println("Successfully added to paid queue");
+					}
 				}
 				else {
 					System.out.println("SERVER - Failed user ack check");
@@ -157,6 +173,7 @@ public class CentralServer extends Thread {
 			//dout.close(); 
 			//din.close();
 			//If I close these here the connection is closed entirely as well
+			//connection.close();
             
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -174,11 +191,11 @@ public class CentralServer extends Thread {
 		}
 	}
 	
-	public void addToFreeQueue(Socket connection) {
-		this.freeQueue.add(connection);
+	public boolean addToFreeQueue(Socket connection) {
+		return this.freeQueue.add(connection);
 	}
-	public void addToPaidQueue(Socket connection) {
-		this.paidQueue.add(connection);
+	public boolean addToPaidQueue(Socket connection) {
+		return this.paidQueue.add(connection);
 	}
 	
 	public Socket getFreeUser() {

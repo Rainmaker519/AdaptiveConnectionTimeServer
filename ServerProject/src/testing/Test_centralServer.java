@@ -24,7 +24,8 @@ class Test_centralServer {
 			CentralServer c = new CentralServer(6666,2,1.01);
 			int l = 0; 
 			
-			while (l < 500) {
+			while (l < 5) {
+				System.out.println("RS");
 				double ran = Math.random() * 100;
 				if (ran >= 40) {
 					clientConnect(USER_CLASS.FREE);
@@ -33,17 +34,10 @@ class Test_centralServer {
 					clientConnect(USER_CLASS.PAID);
 				}
 				l++;
+				long interArrival = (long) (Math.random() * 500);
+				TimeUnit.MILLISECONDS.sleep(interArrival);
 			}
 			
-			
-			TimeUnit.SECONDS.sleep(10);
-			clientConnect(USER_CLASS.FREE);
-			TimeUnit.SECONDS.sleep(1);
-			clientConnect(USER_CLASS.PAID);
-			clientConnect(USER_CLASS.PAID);
-			clientConnect(USER_CLASS.PAID);
-			TimeUnit.SECONDS.sleep(1);
-			TimeUnit.SECONDS.sleep(1);
 			c.interrupt();
 		}
 		catch(Exception e) {
@@ -100,6 +94,7 @@ class Test_centralServer {
 				din.close();
 			}
 			
+			System.out.println("At rand g selection");
 			double r = Math.random() * 100;
 			if (r >50) {
 				dout.writeUTF("GM");
@@ -110,7 +105,7 @@ class Test_centralServer {
 				dout.flush();
 			}
 			
-			System.out.println(din.readUTF());
+			System.out.println("read-utf: " + din.readUTF());
 			//din.close();
 			//dout.close();
 			
