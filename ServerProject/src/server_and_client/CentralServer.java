@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -73,7 +74,7 @@ public class CentralServer extends Thread {
 	private Queue<Socket> freeQueue;
 	private Queue<Socket> paidQueue;
 	
-	private int requestsHandledCount;
+	private static int requestsHandledCount;
 	
 	
 	
@@ -85,7 +86,7 @@ public class CentralServer extends Thread {
 		this.freeQueue = new LinkedList<Socket>();
 		this.paidQueue = new LinkedList<Socket>();
 		
-		this.requestsHandledCount = 0;
+		requestsHandledCount = 0;
 		
 		start();
 	}
@@ -95,19 +96,24 @@ public class CentralServer extends Thread {
     public void run() {
 		Loop mape_k = new Loop(this);
 		double timeElapsed = 0;
+		try {
+			this.centralSocket.setSoTimeout(200);
+		} catch (SocketException e) {
+
+		}
         while ( !interrupted() ) {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
         	//Maybe just need to pull either the loop or the handling of incoming connections into 
         	//its own thread
         	while (timeElapsed < 50) {
-        		System.out.println("testos2");//not even making it here?
+        		//System.out.println("testos2");//not even making it here?
         		handleIncomingConnections();
-        		System.out.println("testos3");//not even making it here?
+        		//System.out.println("testos3");//not even making it here?
         		timeElapsed = System.currentTimeMillis() - startTime;
         		//System.out.println("---------------------");
         	}
-        	System.out.println("testos4");//not even making it here?
+        	//System.out.println("testos4");//not even making it here?
         	mape_k.run();
         	
         	System.out.println("==========");
@@ -116,7 +122,7 @@ public class CentralServer extends Thread {
         	System.out.println("FQL: " + this.getFreeQueueLength() + "| PQL: " + this.getPaidQueueLength());
         	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[2] + "]");
         	System.out.println("CServerClosedStatus: " + this.centralSocket.isClosed());
-        	System.out.println("Total Requests Handled: " + this.requestsHandledCount);
+        	System.out.println("Total Requests Handled: " + requestsHandledCount);
         	System.out.println("==========");
         	
         	startTime = System.currentTimeMillis();
@@ -128,11 +134,9 @@ public class CentralServer extends Thread {
 	public void handleIncomingConnections() {
 		Socket connection;
 		try {
-			//System.out.println(this.centralSocket.getLocalPort());
-			connection = this.centralSocket.accept();
+			connection = this.centralSocket.accept(); 	
 			
-			//connection.setKeepAlive(true);
-			System.out.println("SERVER - Client Connection Request Recieved");
+			//System.out.println("SERVER - Client Connection Request Recieved");
 			
 			DataInputStream din = new DataInputStream(connection.getInputStream());
 			String synCheck = din.readUTF();
@@ -147,23 +151,29 @@ public class CentralServer extends Thread {
 			String ackFinalCheckFull = din.readUTF();
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
 			
-			System.out.println(synCheck);
-			System.out.println(ackFinalCheckSplit[1]);
+			//System.out.println(synCheck);
+			//System.out.println(ackFinalCheckSplit[1]);
 			
 			if (!ackFinalCheckSplit[0].equals(synCheck)) {
 				//System.out.println("SERVER - Failed user ack check");
 			}
 			else {
 				if (ackFinalCheckSplit[1].equals("FREE")) {
-					System.out.println("SERVER - Connection to free user accepted, adding to service queue");
+					//System.out.println("SERVER - Connection to free user accepted, adding to service queue");
 					if (addToFreeQueue(connection)) {
 						System.out.println("Successfully added to free queue");
 					}
+					else {
+						System.out.println("SERVER - Failed user ack check - internal");
+					}
 				}
 				else if (ackFinalCheckSplit[1].equals("PAID")) {
-					System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
+					//System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
 					if (addToPaidQueue(connection)) {
 						System.out.println("Successfully added to paid queue");
+					}
+					else {
+						System.out.println("SERVER - Failed user ack check - internal");
 					}
 				}
 				else {
@@ -297,6 +307,7 @@ public class CentralServer extends Thread {
             	 }
             	 else {
             		 System.out.println("Server_Operation_" + this.m_id + "_" + this.userClass);
+            		 requestsHandledCount = requestsHandledCount + 1;
             	 }
             	 
             	 try {
@@ -331,7 +342,7 @@ public class CentralServer extends Thread {
 					e.printStackTrace();
 				}
 				*/
-            	 this.reference.requestsHandledCount++;
+            	 
             	 close();
             	 interrupt();
             	 //this.reference.setSubserverNull(this.m_id);

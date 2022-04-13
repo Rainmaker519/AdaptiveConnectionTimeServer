@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 //import org.junit.jupiter.api.AfterAll;
@@ -22,21 +23,31 @@ class Test_centralServer {
 	void testRun() {
 		try {
 			CentralServer c = new CentralServer(6666,2,1.01);
+			int lSize = 20;
 			int l = 0; 
 			
-			while (l < 5) {
+			ArrayList<Socket> clients = new ArrayList<>();
+			
+			while (l < 20) {
 				System.out.println("RS");
 				double ran = Math.random() * 100;
 				if (ran >= 40) {
-					clientConnect(USER_CLASS.FREE);
+					clients.add(clientConnect(USER_CLASS.FREE));
 				}
 				else {
-					clientConnect(USER_CLASS.PAID);
+					clients.add(clientConnect(USER_CLASS.PAID));
 				}
 				l++;
 				long interArrival = (long) (Math.random() * 500);
 				TimeUnit.MILLISECONDS.sleep(interArrival);
 			}
+			
+			while (!clients.isEmpty()) {
+				clientRequest(clients.get(0));
+				clients.remove(0);
+			}
+			
+			System.out.println("FQL: " + c.getFreeQueueLength() + "||  PQL: " + c.getPaidQueueLength());
 			
 			c.interrupt();
 		}
@@ -45,7 +56,7 @@ class Test_centralServer {
 		}
 	}
 	
-	private void clientConnect(USER_CLASS c) {
+	private Socket clientConnect(USER_CLASS c) {
 		try {
 			Socket client = new Socket("localhost",6666);
 			
@@ -94,7 +105,32 @@ class Test_centralServer {
 				din.close();
 			}
 			
-			System.out.println("At rand g selection");
+			//the reason this shit is blocking is because I'm needing a response from
+			//the server to move forward in the client connect method wtf
+			
+			//the connections dont even make it to the subserver until after a certain
+			//amount of time passes and all the connections in that time are queued up
+			
+			//since it blocks in the connect method tho, the server never reaches the point
+			//where connections are allocated to subservers at all
+			
+			return client;
+			
+			
+			
+		} catch (Exception e) {
+			fail("CLIENT - Failed to open client socket");
+			return null;
+		}
+	}
+	
+	private boolean clientRequest(Socket client) {
+		//System.out.println("At rand g selection");
+		
+		try {
+			DataOutputStream dout = new DataOutputStream(client.getOutputStream());  
+			DataInputStream din = new DataInputStream(client.getInputStream());
+			
 			double r = Math.random() * 100;
 			if (r >50) {
 				dout.writeUTF("GM");
@@ -106,14 +142,17 @@ class Test_centralServer {
 			}
 			
 			System.out.println("read-utf: " + din.readUTF());
-			//din.close();
-			//dout.close();
+			din.close();
+			dout.close();
 			
-			return;
+			client.close();
 			
-		} catch (Exception e) {
-			fail("CLIENT - Failed to open client socket");
+			return true;
+		}catch (Exception e) {
+			System.out.println("request failed oops");
+			return false;
 		}
+		
 	}
 
 }
