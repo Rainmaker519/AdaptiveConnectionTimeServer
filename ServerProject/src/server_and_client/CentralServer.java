@@ -7,63 +7,11 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 import adaptive_loop.Loop;
 
 public class CentralServer extends Thread {
-	
-	/** CURRENT PROGRESS - FOR ME WHEN I COME BACK TO DO MORE!
-	 * THE FIRST TWO CONNECTIONS DO FINE AND SEEM LIKE THE
-	 * TASKS ARE BEING HANDLED PROPERLY BY THE SUBSERVERS
-	 * 
-	 * AFTER THAT IT SEEMS LIKE THERE IS A ISSUE WITH 
-	 * THREADING OR SOMETHING WHERE THE SERVER NO LONGER 
-	 * IS RECIEVING THE REQUESTS AND THE CLIENTS
-	 * ARE STUCK WAITING WITHOUT THEIRS GOING
-	 * THROUGH!
-	 * 
-	 * -------
-	 * SOCKETS STILL ALL CLOSED BY THE TIME THEY ARE IN THE 
-	 * SUBSERVERS, POST LIKELY WRONG OR JAVA CHANGED
-	 * 
-	 * MIGHT WORK IF I MOVE HANDLING TCP TO SUBSERVERS,
-	 * IN THE POST HE ASSIGNS TO SUBSERVER DIRECTLY AFTER ACCEPTING
-	 * ON CENTRAL, POSSIBLE THAT OPENING AND CLOSING 
-	 * READ/WRITE STREAMS ALSO CLOSES THE SOCKET,
-	 * IF SO NEEDS TO BE DONE IN THE SUBSERVER SO I CAN USE THE OPEN CONNECTION
-	 * TO HANDLE USER REQUESTS
-	 * 
-	 * [TESTING TO SEE IF ADDING A GPG KEY WILL LET MY COMMITS
-	 * SHOW UP AS CONTRIBUTIONS ON MY PROFILE]
-	 * 
-	 * gpg testing - final
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * ADD SOMETHING TO SAVE THE RATIO OF SUBSERVERS FROM THE PREVIOUS LOOP OR SOMETHING,				!!!!!!!!!!
-	 * CURRENTLY THE SUBSERVERS ARE FREQUENTLY EMPTY WHEN MONITOR CHECKS THE RATIO FOR ADAPTING			!!!!!!!!!!
-	 * 
-	 * 
-	 * 
-	 * 
-	 * ALSO, EVERYTHING BROKE WHEN I ADDED A USER REQUEST AND SERVER RESPONSE AS THE 
-	 * SUBSERVER FUNCTION, STALLING WAITING FOR USER INPUT PROBABLY
-	 * 
-	 * PROB THE TWO SUBSERVER PROCESSES I DIDNT COULDNT ACCOUNT FOR BEFORE
-	 * FIGURE OUT WHERE THOSE ARE
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * NOPE!!! ITS BLOCKING AT THE ACCEPT METHOD IN handleIncomingConnections() 
-	 * BECAUSE MY SHIT TEST METHOD IS ONLY ACTUALLY SENDING ONE CONNECTION REQUEST
-	 * FOR SOME REASON IDK WHY YET
-	 */
 	
 	public final int maxClients = 6;
 	private final ServerSocket centralSocket;
@@ -97,23 +45,19 @@ public class CentralServer extends Thread {
 		Loop mape_k = new Loop(this);
 		double timeElapsed = 0;
 		try {
-			this.centralSocket.setSoTimeout(200);
+			this.centralSocket.setSoTimeout(300);
 		} catch (SocketException e) {
 
 		}
         while ( !interrupted() ) {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
-        	//Maybe just need to pull either the loop or the handling of incoming connections into 
-        	//its own thread
-        	while (timeElapsed < 50) {
-        		//System.out.println("testos2");//not even making it here?
+        	
+        	while (timeElapsed < 500) {
         		handleIncomingConnections();
-        		//System.out.println("testos3");//not even making it here?
         		timeElapsed = System.currentTimeMillis() - startTime;
-        		//System.out.println("---------------------");
         	}
-        	//System.out.println("testos4");//not even making it here?
+        	
         	mape_k.run();
         	
         	System.out.println("==========");
@@ -123,6 +67,7 @@ public class CentralServer extends Thread {
         	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[2] + "]");
         	System.out.println("CServerClosedStatus: " + this.centralSocket.isClosed());
         	System.out.println("Total Requests Handled: " + requestsHandledCount);
+        	//System.out.println("Buffer Size: " + this.centralSocket.getReceiveBufferSize());
         	System.out.println("==========");
         	
         	startTime = System.currentTimeMillis();
@@ -136,14 +81,14 @@ public class CentralServer extends Thread {
 		try {
 			connection = this.centralSocket.accept(); 	
 			
-			//System.out.println("SERVER - Client Connection Request Recieved");
-			
 			DataInputStream din = new DataInputStream(connection.getInputStream());
 			String synCheck = din.readUTF();
 			
 			DataOutputStream dout = new DataOutputStream(connection.getOutputStream());  
 			
-			String ackResponse = synCheck + "1";
+			String syn = Integer.toString((int) (Math.random() * 1000));
+			
+			String ackResponse = synCheck + " " + syn;
 			
 			dout.writeUTF(ackResponse);  
 			dout.flush();  
@@ -151,10 +96,7 @@ public class CentralServer extends Thread {
 			String ackFinalCheckFull = din.readUTF();
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
 			
-			//System.out.println(synCheck);
-			//System.out.println(ackFinalCheckSplit[1]);
-			
-			if (!ackFinalCheckSplit[0].equals(synCheck)) {
+			if (!ackFinalCheckSplit[0].equals(syn)) {
 				//System.out.println("SERVER - Failed user ack check");
 			}
 			else {
@@ -180,13 +122,9 @@ public class CentralServer extends Thread {
 					System.out.println("SERVER - Failed user ack check");
 				}
 			}
-			//dout.close(); 
-			//din.close();
-			//If I close these here the connection is closed entirely as well
-			//connection.close();
             
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.out.println("CS - Connection Attempt Failed");
 		}
 	}
@@ -307,6 +245,7 @@ public class CentralServer extends Thread {
             	 }
             	 else {
             		 System.out.println("Server_Operation_" + this.m_id + "_" + this.userClass);
+            		 //System.out.println((char)27 + "[31m" + "ERROR MESSAGE IN RED");
             		 requestsHandledCount = requestsHandledCount + 1;
             	 }
             	 
@@ -317,6 +256,12 @@ public class CentralServer extends Thread {
             		 //System.out.println("Testos");
             		 
             		 String request = din.readUTF();
+            		 
+            		 long interArrival = (long) (Math.random() * 500);
+         			 try {
+         				 TimeUnit.MILLISECONDS.sleep(interArrival);
+         			 } catch (InterruptedException e) {
+         			 }
             		 
             		 if (request.equals("GM")) {
             			 dout.writeUTF("[Subserver-" + this.m_id + "] Good Morning!");
@@ -338,7 +283,6 @@ public class CentralServer extends Thread {
             	 try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				*/
@@ -349,12 +293,6 @@ public class CentralServer extends Thread {
              }
         }
 
-        //as an example, if you read String messages from your client,
-        //just call this method from the run() method to process the client request
-        public void process( String message ) {
-
-        }
-
         /**
          * terminates the connection with this client (i.e. stops serving him)
          */
@@ -362,13 +300,13 @@ public class CentralServer extends Thread {
         	try {
 				this.subServerSocket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         	this.reference.setSubserverNull(m_id);
         }
     }
 }
+
 
 
 

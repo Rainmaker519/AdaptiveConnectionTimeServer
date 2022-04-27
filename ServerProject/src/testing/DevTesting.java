@@ -8,7 +8,6 @@ public class DevTesting {
 		// TODO Auto-generated method stub
 		try {
 			CentralServer c = new CentralServer(6666,1,1.01);
-			//c.run();
 		}
 		catch(Exception e) {
 			

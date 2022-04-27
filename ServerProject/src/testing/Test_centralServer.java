@@ -84,11 +84,12 @@ class Test_centralServer {
 			
 			DataInputStream din = new DataInputStream(client.getInputStream());
 			String synPlusAck = din.readUTF();
+			String[] synAckSplit = synPlusAck.split(" ");
 			
 			if (c.equals(USER_CLASS.FREE)) {
-				if (synPlusAck.equals(syn + "1")) {
+				if (synAckSplit[0].equals(syn)) {
 					//System.out.println("CLIENT - ACK accepted, sending final response with user class");
-					dout.writeUTF(syn + " " + "FREE");
+					dout.writeUTF(synAckSplit[1] + " " + "FREE");
 				}
 				else {
 					//System.out.println("CLIENT - ACK not accepted");
@@ -102,9 +103,9 @@ class Test_centralServer {
 				}
 			}
 			else if (c.equals(USER_CLASS.PAID)) {
-				if (synPlusAck.equals(syn + "1")) {
+				if (synAckSplit[0].equals(syn)) {
 					//System.out.println("CLIENT - ACK accepted, sending final response with user class");
-					dout.writeUTF(syn + " " + "PAID");
+					dout.writeUTF(synAckSplit[1] + " " + "PAID");
 				}
 				else {
 					//System.out.println("CLIENT - ACK not accepted");
