@@ -65,7 +65,7 @@ public class CentralServer extends Thread {
 	 * FOR SOME REASON IDK WHY YET
 	 */
 	
-	public final int maxClients = 7;
+	public final int maxClients = 6;
 	private final ServerSocket centralSocket;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
@@ -319,15 +319,15 @@ public class CentralServer extends Thread {
             		 String request = din.readUTF();
             		 
             		 if (request.equals("GM")) {
-            			 dout.writeUTF("Good Morning User-" + this.m_id + "!");
+            			 dout.writeUTF("[Subserver-" + this.m_id + "] Good Morning!");
             			 dout.flush();
             		 }
             		 else if (request.equals("GN")) {
-            			 dout.writeUTF("Good Night User-" + this.m_id + "!");
+            			 dout.writeUTF("[Subserver-" + this.m_id + "] Good Night!");
             			 dout.flush();
             		 }
             		 else {
-            			 dout.writeUTF("Please use \"GM\" or \"GN\" User-" + this.m_id + "!");
+            			 dout.writeUTF("[Subserver-" + this.m_id + "] Please use \"GM\" or \"GN\"");
             			 dout.flush();
             		 }
             	 } catch (Exception e) {

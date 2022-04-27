@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 //import org.junit.jupiter.api.AfterAll;
@@ -22,7 +23,11 @@ class Test_centralServer {
 	@Test
 	void testRun() {
 		try {
-			CentralServer c = new CentralServer(6666,2,1.01);
+			Date date = new Date();
+		    //This method returns the time in millis
+		    long start = date.getTime();
+			CentralServer c = new CentralServer(6666,1,1.01);
+			//should I add something to show the average rato
 			int lSize = 20;
 			int l = 0; 
 			
@@ -31,7 +36,7 @@ class Test_centralServer {
 			while (l < 20) {
 				System.out.println("RS");
 				double ran = Math.random() * 100;
-				if (ran >= 40) {
+				if (ran >= 50) {
 					clients.add(clientConnect(USER_CLASS.FREE));
 				}
 				else {
@@ -47,9 +52,18 @@ class Test_centralServer {
 				clients.remove(0);
 			}
 			
-			System.out.println("FQL: " + c.getFreeQueueLength() + "||  PQL: " + c.getPaidQueueLength());
+			System.out.println("FreeQueueLength: " + c.getFreeQueueLength() + "||  PaidQueueLength: " + c.getPaidQueueLength());
+			
+			if (c.getFreeQueueLength() + c.getPaidQueueLength() != 0) {
+				fail();
+			}
 			
 			c.interrupt();
+			
+			date = new Date();
+			long end = date.getTime();
+			
+			System.out.println("Total Time to Handle 20 Requests: " + (end - start) + " Milliseconds");
 		}
 		catch(Exception e) {
 			fail();
