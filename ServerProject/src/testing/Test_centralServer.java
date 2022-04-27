@@ -18,6 +18,12 @@ import org.junit.jupiter.api.Test;
 import server_and_client.CentralServer;
 import server_and_client.USER_CLASS;
 
+/**
+ * JUnit class used for testing both central server and how it interacted with connecting clients.
+ * Good for quick tests, bad for load testing or adaptive system testing.
+ * @author Charlie
+ *
+ */
 class Test_centralServer {
 	
 	@Test
@@ -28,7 +34,6 @@ class Test_centralServer {
 		    long start = date.getTime();
 			CentralServer c = new CentralServer(6666,1,1.01);
 			//should I add something to show the average rato
-			int lSize = 20;
 			int l = 0; 
 			
 			ArrayList<Socket> clients = new ArrayList<>();

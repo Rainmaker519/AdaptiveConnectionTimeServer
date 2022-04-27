@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 
 import adaptive_loop.Loop;
 
@@ -25,11 +23,14 @@ public class CentralServer extends Thread {
 	
 	private static int requestsHandledCount;
 	
-	private ArrayList<Long> responseTimesMilliseconds;
-	private ArrayList<Long> waitTimesMilliseconds;
 	
-	
-	
+	/**
+	 * The managing server of the system, manages incoming connections and serves to correct queues.
+	 * @param portNumber - Port number of server.
+	 * @param relativeDelayFactorFree - Free half of desired ratio.
+	 * @param relativeDelayFactorPaid - Paid half of desired ratio.
+	 * @throws IOException - Throws if server fails to start correctly.
+	 */
 	public CentralServer(int portNumber, double relativeDelayFactorFree, double relativeDelayFactorPaid) throws IOException {
 		this.centralSocket = new ServerSocket(portNumber);
 		this.relativeDelayFactors = new double[2];
@@ -43,7 +44,11 @@ public class CentralServer extends Thread {
 		start();
 	}
 	
-	
+	/**
+	 * What runs when the server is started, which occurs at initialization in this case.
+	 * Spends 300 milliseconds waiting for connections, then runs a loop of mape-k.
+	 * This continues as long as the server is up.
+	 */
 	@Override
     public void run() {
 		Loop mape_k = new Loop(this);
@@ -69,9 +74,7 @@ public class CentralServer extends Thread {
         	int[] countsAndPlan = mape_k.getLoopInstanceCountsPlusPlan();
         	System.out.println("FQL: " + this.getFreeQueueLength() + "| PQL: " + this.getPaidQueueLength());
         	System.out.println("[DR: " + ratios[0] + "|AR: " + ratios[1] + "||C: (" + countsAndPlan[0] + "/" + countsAndPlan[1] + ")|P: " + countsAndPlan[2] + "]");
-        	System.out.println("CServerClosedStatus: " + this.centralSocket.isClosed());
         	System.out.println("Total Requests Handled: " + requestsHandledCount);
-        	//System.out.println("Buffer Size: " + this.centralSocket.getReceiveBufferSize());
         	System.out.println("==========");
         	
         	startTime = System.currentTimeMillis();
@@ -80,6 +83,11 @@ public class CentralServer extends Thread {
         System.out.println("QQQQQQQQQQ(CSERVER INTERRUPTED)QQQQQQQQQQ");
     }
 	
+	/**
+	 * The server side of handling incoming connections, the TCP handshake is fulfilled.
+	 * If everything works as intended, the verified client will be added to either the 
+	 * paid or free queue.
+	 */
 	public void handleIncomingConnections() {
 		Socket connection;
 		try {
@@ -101,11 +109,11 @@ public class CentralServer extends Thread {
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
 			
 			if (!ackFinalCheckSplit[0].equals(syn)) {
-				//System.out.println("SERVER - Failed user ack check");
+				//Failed user ack check.
 			}
 			else {
 				if (ackFinalCheckSplit[1].equals("FREE")) {
-					//System.out.println("SERVER - Connection to free user accepted, adding to service queue");
+					//Connection to free user accepted, adding to service queue.
 					if (addToFreeQueue(connection)) {
 						System.out.println("Successfully added to free queue");
 					}
@@ -114,7 +122,7 @@ public class CentralServer extends Thread {
 					}
 				}
 				else if (ackFinalCheckSplit[1].equals("PAID")) {
-					//System.out.println("SERVER - Connection to paid user accepted, adding to service queue");
+					//Connection to paid user accepted, adding to service queue.
 					if (addToPaidQueue(connection)) {
 						System.out.println("Successfully added to paid queue");
 					}
@@ -126,13 +134,16 @@ public class CentralServer extends Thread {
 					System.out.println("SERVER - Failed user ack check");
 				}
 			}
-            
 		} catch (IOException e) {
-			//e.printStackTrace();
 			System.out.println("CS - Connection Attempt Failed");
 		}
 	}
 	
+	/**
+	 * Sets a subserver slot to null, used for dead subservers.
+	 * @param m_id - Subserver ID.
+	 * @return - True if subserver was NOT null, and now IS null.
+	 */
 	public boolean setSubserverNull(int m_id) {
 		if (this.subServers[m_id] != null) {
 			this.subServers[m_id] = null;
@@ -143,13 +154,27 @@ public class CentralServer extends Thread {
 		}
 	}
 	
+	/**
+	 * Adds given connection to the free connection queue.
+	 * @param connection - Verified client socket.
+	 * @return - True if queue add is successful.
+	 */
 	public boolean addToFreeQueue(Socket connection) {
 		return this.freeQueue.add(connection);
 	}
+	/**
+	 * Adds given connection to the paid connection queue.
+	 * @param connection - Verified client socket.
+	 * @return - True if queue add is successful.
+	 */
 	public boolean addToPaidQueue(Socket connection) {
 		return this.paidQueue.add(connection);
 	}
 	
+	/**
+	 * Polls a verified free user from the free queue.
+	 * @return - The socket of that user.
+	 */
 	public Socket getFreeUser() {
 		if (!this.freeQueue.isEmpty()) {
 			return this.freeQueue.poll();
@@ -158,6 +183,10 @@ public class CentralServer extends Thread {
 			return null;
 		}
 	}
+	/**
+	 * Polls a verified paid user from the free queue.
+	 * @return - The socket of that user.
+	 */
 	public Socket getPaidUser() {
 		if (!this.paidQueue.isEmpty()) {
 			return this.paidQueue.poll();
@@ -167,16 +196,24 @@ public class CentralServer extends Thread {
 		}
 	}
 	
+	/**
+	 * Gets the current length of the free queue.
+	 * @return - The current length of the free queue.
+	 */
 	public int getFreeQueueLength() {
 		return this.freeQueue.size();
 	}
+	/**
+	 * Gets the current length of the paid queue.
+	 * @return - The current length of the paid queue.
+	 */
 	public int getPaidQueueLength() {
 		return this.paidQueue.size();
 	}
 	
 	/**
-	 * 
-	 * @return - an array of ints representing the subservers. 0 if free, 1 if paid, -1 if not in use
+	 * Gets an array of values representing the classes of each subserver.
+	 * @return - An array of ints representing the subservers. 0 if free, 1 if paid, -1 if not in use.
 	 */
 	public int[] getSubserverClasses() {
 		int[] result = new int[this.maxClients];
@@ -195,8 +232,8 @@ public class CentralServer extends Thread {
 	}
 	
 	/**
-	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value
-	 * @param connection - Connection accepted at the central server socket
+	 * Iterates over all available subservers and assigns the connection to one of them assuming at least one subserver is assigned a null value.
+	 * @param connection - Connection accepted at the central server socket.
 	 */
 	 public void assignConnectionToSubServer(USER_CLASS uClass) {
          for ( int i = 0 ; i < maxClients ; i++ ) {
@@ -215,17 +252,14 @@ public class CentralServer extends Thread {
              }
          }
     }
-
+	 
+	/**
+	 * Returns port number of central server.
+	 * @return - Port number of central server.
+	 */
 	public int getPortNumberTESTING () {
 		return centralSocket.getLocalPort();
 	}
-	
-	public void setResponse(ArrayList<Long> response) {
-    	this.responseTimesMilliseconds = response;
-    }
-    public void setWait(ArrayList<Long> wait) {
-    	this.waitTimesMilliseconds = wait;
-    }
 	
 	
 	protected class SubServer extends Thread {
@@ -236,6 +270,14 @@ public class CentralServer extends Thread {
 
         final private USER_CLASS userClass;
 
+        /**
+         * SubServer user to handle user requests once they've been verified by the handshake from
+         * the central server and queued up.
+         * @param connection - How we pass the user connection in from that queue.
+         * @param id - The id of the subserver 0-(numSubservers).
+         * @param u_class - The user class this subserver is serving.
+         * @param serverReference - A ease of access reference to the central server.
+         */
         public SubServer( Socket connection , int id , USER_CLASS u_class, CentralServer serverReference) {
             this.m_id = id;
             this.subServerSocket = connection;
@@ -244,6 +286,10 @@ public class CentralServer extends Thread {
             start();
         }
 
+        /**
+         * The code that will run if the SubServer is started or run. This checks if a subserver is not closed,
+         * then handles the defined client request of asking for a good morning or good night message.
+         */
         @Override
         public void run() {
              while( !interrupted() ) {
@@ -256,7 +302,6 @@ public class CentralServer extends Thread {
             	 }
             	 else {
             		 System.out.println("Server_Operation_" + this.m_id + "_" + this.userClass);
-            		 //System.out.println((char)27 + "[31m" + "ERROR MESSAGE IN RED");
             		 requestsHandledCount = requestsHandledCount + 1;
             	 }
             	 
@@ -264,15 +309,7 @@ public class CentralServer extends Thread {
             		 DataOutputStream dout = new DataOutputStream(subServerSocket.getOutputStream());  
             		 DataInputStream din = new DataInputStream(subServerSocket.getInputStream());
             		 
-            		 //System.out.println("Testos");
-            		 
             		 String request = din.readUTF();
-            		 
-            		 long interArrival = (long) (Math.random() * 500);
-         			 try {
-         				 TimeUnit.MILLISECONDS.sleep(interArrival);
-         			 } catch (InterruptedException e) {
-         			 }
             		 
             		 if (request.equals("GM")) {
             			 dout.writeUTF("[Subserver-" + this.m_id + "] Good Morning!");
@@ -290,22 +327,13 @@ public class CentralServer extends Thread {
             		 System.out.println("Socket open but streams broken???");
             	 }
             	 
-            	 /*
-            	 try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				*/
-            	 
             	 close();
             	 interrupt();
-            	 //this.reference.setSubserverNull(this.m_id);
              }
         }
 
         /**
-         * terminates the connection with this client (i.e. stops serving him)
+         * Terminates the connection with this client (i.e. stops serving him).
          */
         public void close() {
         	try {
