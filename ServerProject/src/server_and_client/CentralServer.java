@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,9 @@ public class CentralServer extends Thread {
 	private Queue<Socket> paidQueue;
 	
 	private static int requestsHandledCount;
+	
+	private ArrayList<Long> responseTimesMilliseconds;
+	private ArrayList<Long> waitTimesMilliseconds;
 	
 	
 	
@@ -216,6 +220,13 @@ public class CentralServer extends Thread {
 		return centralSocket.getLocalPort();
 	}
 	
+	public void setResponse(ArrayList<Long> response) {
+    	this.responseTimesMilliseconds = response;
+    }
+    public void setWait(ArrayList<Long> wait) {
+    	this.waitTimesMilliseconds = wait;
+    }
+	
 	
 	protected class SubServer extends Thread {
 
@@ -304,6 +315,8 @@ public class CentralServer extends Thread {
 			}
         	this.reference.setSubserverNull(m_id);
         }
+        
+        
     }
 }
 
