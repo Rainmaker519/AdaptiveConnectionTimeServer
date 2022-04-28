@@ -7,12 +7,13 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 import adaptive_loop.Loop;
 
 public class CentralServer extends Thread {
 	
-	public final int maxClients = 6;
+	public final int maxClients = 3;
 	private final ServerSocket centralSocket;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
@@ -62,7 +63,7 @@ public class CentralServer extends Thread {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
         	
-        	while (timeElapsed < 500) {
+        	while (timeElapsed < 50) {
         		handleIncomingConnections();
         		timeElapsed = System.currentTimeMillis() - startTime;
         	}
@@ -107,6 +108,10 @@ public class CentralServer extends Thread {
 			
 			String ackFinalCheckFull = din.readUTF();
 			String[] ackFinalCheckSplit = ackFinalCheckFull.split(" ");
+			
+			
+   		 	
+			
 			
 			if (!ackFinalCheckSplit[0].equals(syn)) {
 				//Failed user ack check.
@@ -311,6 +316,7 @@ public class CentralServer extends Thread {
             		 
             		 String request = din.readUTF();
             		 
+            		 
             		 if (request.equals("GM")) {
             			 dout.writeUTF("[Subserver-" + this.m_id + "] Good Morning!");
             			 dout.flush();
@@ -323,6 +329,7 @@ public class CentralServer extends Thread {
             			 dout.writeUTF("[Subserver-" + this.m_id + "] Please use \"GM\" or \"GN\"");
             			 dout.flush();
             		 }
+            		
             	 } catch (Exception e) {
             		 System.out.println("Socket open but streams broken???");
             	 }

@@ -10,7 +10,7 @@ public class DevTesting {
 	 */
 	public static void main(String[] args) {
 		try {
-			CentralServer c = new CentralServer(6666,1,1.01);
+			CentralServer c = new CentralServer(6666,4,3);
 			System.out.println(c);
 		}
 		catch(Exception e) {
@@ -19,3 +19,4 @@ public class DevTesting {
 	}
 
 }
+//add more wait to central server to get heavier wait times?

@@ -8,29 +8,29 @@ import java.util.Scanner;
 
 public class ParseDataForGraph {
 	
-	public static ArrayList<Integer> response_;
-	public static ArrayList<Integer> wait_;
-	public static int avgResponse_;
-	public static int avgWait_;
+	public static ArrayList<Integer> free_response_;
+	public static ArrayList<Integer> paid_response_;
 
 	/**
 	 * Handles all parsing of RESULTS.txt data, puts in a easily readable form for python graphing.
 	 * Only works if RequestGenerator has already outputted to RESULTS.txt.
 	 * @param args - n/a
+	 * @throws FileNotFoundException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
 		File obj = new File("C:\\Users\\Charlie\\Desktop\\RESULTS.txt");
-		parseData(obj);
-		
+		//parseData(obj);
+		parse(obj);
+		/*
 		try {
-			PrintWriter out = new PrintWriter("C:\\Users\\Charlie\\Desktop\\response.txt");
-			for (int i : response_) {
+			PrintWriter out = new PrintWriter("C:\\Users\\Charlie\\Desktop\\free_response.txt");
+			for (int i : free_response_) {
 				out.println(i);
 				out.flush();
 			}
 			out.close();
-			out = new PrintWriter("C:\\Users\\Charlie\\Desktop\\wait.txt");
-			for (int i : wait_) {
+			out = new PrintWriter("C:\\Users\\Charlie\\Desktop\\paid_response.txt");
+			for (int i : paid_response_) {
 				out.println(i);
 				out.flush();
 			}
@@ -38,6 +38,7 @@ public class ParseDataForGraph {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		*/
 	}
 	
 	public static void parseData(File obj) {
@@ -51,8 +52,6 @@ public class ParseDataForGraph {
 			
 			int count = 0;
 			
-			int avgResponse = 0;
-			int avgWait = 0;
 			boolean responseNext = false;
 			boolean waitNext = false;
 			
@@ -60,11 +59,9 @@ public class ParseDataForGraph {
 			while (in.hasNext()) {
 				String temp = in.next();
 				if (responseNext) {
-					avgResponse = Integer.valueOf(temp);
 					responseNext = false;
 				}
 				else if (waitNext) {
-					avgWait = Integer.valueOf(temp);
 					waitNext = false;
 				}
 				else {
@@ -85,12 +82,7 @@ public class ParseDataForGraph {
 						}
 						else {
 							if (temp.equals("AvgResponse:") || temp.equals("AvgWait:")) {
-								if (temp.equals("AvgResponse:")) {
-									responseNext = true;
-								}
-								else if (temp.equals("AvgWait:")){
-									waitNext = true;
-								}
+								
 							}
 							else {
 								holdie.add(temp.substring(0, temp.length()-1));
@@ -105,26 +97,31 @@ public class ParseDataForGraph {
 				
 			
 			//Casting data to integers and splitting into two lists.
-			ArrayList<Integer> response = new ArrayList<>();
-			ArrayList<Integer> wait = new ArrayList<>();
+			ArrayList<Integer> free_response = new ArrayList<>();
+			ArrayList<Integer> paid_response = new ArrayList<>();
 			
 			for (int i = 0; i < indOfWaitStart; i++) {
-				response.add(Integer.valueOf(holdie.get(i)));
+				free_response.add(Integer.valueOf(holdie.get(i)));
 			}
-			for (int i = indOfWaitStart; i < holdie.size()-4; i++) {
-				wait.add(Integer.valueOf(holdie.get(i)));
+			for (int i = indOfWaitStart; i < holdie.size(); i++) {
+				paid_response.add(Integer.valueOf(holdie.get(i)));
 			}
 			
-			response_ = response;
-			wait_ = wait;
-			avgResponse_ = avgResponse;
-			avgWait_ = avgWait;
+			free_response_ = free_response;
+			paid_response_ = paid_response;
 			
 			in.close();
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void parse(File obj) throws FileNotFoundException {
+		Scanner in = new Scanner(obj);
+		String rTimes = in.nextLine();
+		String sTimes = in.nextLine();
+		String classes = in.nextLine();
 	}
 
 }

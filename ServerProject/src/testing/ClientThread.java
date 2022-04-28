@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import server_and_client.USER_CLASS;
 
@@ -13,8 +14,10 @@ public class ClientThread extends Thread {
 	private String hostName_;
 	private int port_;
 	
-	private ArrayList<Long> responseTimesMilliseconds;
-	private ArrayList<Long> waitTimesMilliseconds;
+	private ArrayList<Long[]> freeResponseTimesMilliseconds;
+	private ArrayList<Long[]> paidResponseTimesMilliseconds;
+	
+	private USER_CLASS class_;
 	
 	/**
 	 * Thread for individual client connection, used entirely for load and stability testing purposes.
@@ -27,8 +30,8 @@ public class ClientThread extends Thread {
 		hostName_ = hostName;
 		port_ = port;
 		
-		responseTimesMilliseconds = new ArrayList<>();
-		waitTimesMilliseconds = new ArrayList<>();
+		freeResponseTimesMilliseconds = new ArrayList<>();
+		paidResponseTimesMilliseconds = new ArrayList<>();
 	}
 	
 	/**
@@ -45,18 +48,18 @@ public class ClientThread extends Thread {
 		    start = date.getTime();
 		}
 		while (!clients.isEmpty()) {
-			Date date = new Date();
-		    long end = date.getTime();
-		    if (end-start > 0) {
-		    	waitTimesMilliseconds.add(end-start);
-		    }
+
 			clientRequest(clients.get(0));
 			clients.remove(0);
-			date = new Date();
-		    end = date.getTime();
-		    if (end-start > 0) {
-		    	responseTimesMilliseconds.add(end-start);
+			Date date = new Date();
+		    long end = date.getTime();
+		    if (class_ == USER_CLASS.FREE) {
+		    	 freeResponseTimesMilliseconds.add(new Long[] {end-start,end});
 		    }
+		    else {
+		    	paidResponseTimesMilliseconds.add(new Long[] {end-start,end});
+		    }
+		   
 		}
 	}
 	
@@ -75,6 +78,8 @@ public class ClientThread extends Thread {
 		else {
 			c = USER_CLASS.PAID;
 		}
+		this.class_ = c;
+		
 		//client attempts to connect
 		try {
 			Socket client = new Socket(hostName_,port_);
@@ -140,6 +145,7 @@ public class ClientThread extends Thread {
 			DataOutputStream dout = new DataOutputStream(client.getOutputStream());  
 			DataInputStream din = new DataInputStream(client.getInputStream());
 			
+			
 			double r = Math.random() * 100;
 			if (r >50) {
 				dout.writeUTF("GM");
@@ -165,17 +171,17 @@ public class ClientThread extends Thread {
 	}
 	
 	/**
-	 * Returns a list of response times accumulated from all clients on this client thread.
+	 * Returns a list of response times accumulated from free clients on this client thread.
 	 * @return - Accumulated response times as ArrayList<Long>
 	 */
-	public ArrayList<Long> getResponseTimes() {
-		return this.responseTimesMilliseconds;
+	public ArrayList<Long[]> getResponseTimesFree() {
+		return this.freeResponseTimesMilliseconds;
 	}
 	/**
-	 * Returns a list of wait times accumulated from all clients on this client thread.
+	 * Returns a list of response times accumulated from paid clients on this client thread.
 	 * @return - Accumulated wait times as ArrayList<Long>
 	 */
-	public ArrayList<Long> getWaitTimes() {
-		return this.waitTimesMilliseconds;
+	public ArrayList<Long[]> getResponseTimesPaid() {
+		return this.paidResponseTimesMilliseconds;
 	}
 }

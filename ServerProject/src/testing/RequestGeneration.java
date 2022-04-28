@@ -19,8 +19,8 @@ public class RequestGeneration {
 		int port = Integer.valueOf(args[2]);
 		
 		//Initializing local data structures.
-		ArrayList<Long> totalResponseTimes = new ArrayList<>();
-		ArrayList<Long> totalWaitTimes = new ArrayList<>();
+		ArrayList<Long[]> totalFreeResponseTimes = new ArrayList<>();
+		ArrayList<Long[]> totalPaidResponseTimes = new ArrayList<>();
 		
 		ArrayList<ClientThread> clientThreads = new ArrayList<>();
 		
@@ -37,12 +37,12 @@ public class RequestGeneration {
 		System.out.println("All clients successfully created");
 		
 		//For n cycles run each of the threads and record the response and wait times.
-		int cycles = 5;
+		int cycles = 3;
 		while (cycles >= 1) {
 			for (ClientThread t : clientThreads) {
 				t.run();
-				totalResponseTimes.addAll(t.getResponseTimes());
-				totalWaitTimes.addAll(t.getWaitTimes());
+				totalFreeResponseTimes.addAll(t.getResponseTimesFree());
+				totalPaidResponseTimes.addAll(t.getResponseTimesPaid());
 			}
 			cycles -= 1;
 		}
@@ -50,32 +50,48 @@ public class RequestGeneration {
 		//Recording both response and wait times along with their averages,
 		//and printing to a local text file.
 		try {
-			long avgResponse = 0;
-			long avgWait = 0;
-			for (long i : totalResponseTimes) {
-				avgResponse += i;
+			
+			ArrayList<Integer> responseTimes = new ArrayList<>();
+			ArrayList<Long> systemTimes = new ArrayList<>();
+			ArrayList<Integer> freeOrPaid = new ArrayList<>();
+			
+			for (Long[] l : totalFreeResponseTimes) {
+				responseTimes.add(Integer.valueOf(l[0].toString()));
+				systemTimes.add(l[1]);
+				freeOrPaid.add(0);
 			}
-			for (long i : totalWaitTimes) {
-				avgWait += i;
+			for (Long[] l : totalPaidResponseTimes) {
+				responseTimes.add(Integer.valueOf(l[0].toString()));
+				systemTimes.add(l[1]);
+				freeOrPaid.add(1);
 			}
 			
-			avgResponse = avgResponse / totalResponseTimes.size();
-			avgWait = avgWait / totalWaitTimes.size();
+			System.out.println(responseTimes);
+			System.out.println(systemTimes);
+			System.out.println(freeOrPaid);
 			
 			PrintWriter out = new PrintWriter("C:\\Users\\Charlie\\Desktop\\RESULTS.txt");
 			
-			out.println(totalResponseTimes);
-			out.println(totalWaitTimes);
-			out.println("AvgResponse: " + avgResponse);
-			out.println("AvgWait: " + avgWait);
+			out.println(responseTimes);
+			out.println(systemTimes);
+			out.println(freeOrPaid);
+			
+			//out.flush();
+			out.close();
+			
+			/*
+			out.println(totalFreeResponseTimes);
+			out.println(totalPaidResponseTimes);
+			out.println("AvgResponse: " + avgFreeResponse);
+			out.println("AvgWait: " + avgPaidResponse);
 			out.println("-");
 			out.flush();
 			out.close();
-			
+			*/
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
+	
 }

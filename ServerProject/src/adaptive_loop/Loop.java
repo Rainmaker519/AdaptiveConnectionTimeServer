@@ -12,6 +12,14 @@ public class Loop {
 	 * on the response time of the user making it a poor metric for average connection delay.
 	 */
 	
+	//is the loop allocating all the possible free subservers each loop?
+	
+	//should the loop be running on its own rather than as part of the centralserver loop?
+	
+	//try lowering the time waiting for new clients to make more loop runs
+	
+	
+	
 	public CentralServer server;
 	
 	private ArrayList<Double> freeConnections;
@@ -135,10 +143,10 @@ public class Loop {
 		
 		double error = desiredRatio - actualRatio;
 		
-		if (error >= .1) {
+		if (error >= .5) {
 			return 0;
 		}
-		else if (error <= -.1) {
+		else if (error <= -.5) {
 			return 1;
 		}
 		else {
@@ -182,6 +190,14 @@ public class Loop {
 							this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 						}
 					}
+				}
+			}
+			else {
+				if (plan == 0 && this.server.getFreeQueueLength() > 0) {
+					this.server.assignConnectionToSubServer(USER_CLASS.FREE);
+				}
+				else if (plan == 1 && this.server.getPaidQueueLength() > 0) {
+					this.server.assignConnectionToSubServer(USER_CLASS.PAID);
 				}
 			}
 		}
