@@ -10,7 +10,7 @@ public class DevTesting {
 	 */
 	public static void main(String[] args) {
 		try {
-			CentralServer c = new CentralServer(6666,4,3);
+			CentralServer c = new CentralServer(6666,4,3); //1.33 intended ratio
 			System.out.println(c);
 		}
 		catch(Exception e) {

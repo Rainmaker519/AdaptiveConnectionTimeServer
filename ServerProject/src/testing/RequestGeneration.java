@@ -37,7 +37,7 @@ public class RequestGeneration {
 		System.out.println("All clients successfully created");
 		
 		//For n cycles run each of the threads and record the response and wait times.
-		int cycles = 10;
+		int cycles = 15;
 		while (cycles >= 1) {
 			for (ClientThread t : clientThreads) {
 				t.run();

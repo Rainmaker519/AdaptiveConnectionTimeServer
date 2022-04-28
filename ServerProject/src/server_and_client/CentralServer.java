@@ -63,7 +63,7 @@ public class CentralServer extends Thread {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
         	
-        	while (timeElapsed < 100) {
+        	while (timeElapsed < 130) {
         		handleIncomingConnections();
         		timeElapsed = System.currentTimeMillis() - startTime;
         	}
