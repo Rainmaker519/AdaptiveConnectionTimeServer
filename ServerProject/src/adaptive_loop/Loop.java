@@ -141,17 +141,19 @@ public class Loop {
 		double actualRatio = freeNum / paidNum;
 		this.actualRatio_ = actualRatio;
 		
-		double error = desiredRatio - actualRatio;
+		double error = Math.abs(desiredRatio - actualRatio);
 		
-		if (error >= .5) {
+		double testError = Math.abs(desiredRatio - (freeNum+1 / paidNum));
+		if (testError < error) {
 			return 0;
 		}
-		else if (error <= -.5) {
+		else if (testError > error){
 			return 1;
 		}
 		else {
 			return -1;
 		}
+
 	}
 	
 	/**

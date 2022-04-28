@@ -13,7 +13,7 @@ import adaptive_loop.Loop;
 
 public class CentralServer extends Thread {
 	
-	public final int maxClients = 3;
+	public final int maxClients = 8;
 	private final ServerSocket centralSocket;
 	private final SubServer[] subServers = new SubServer[maxClients];
 	
@@ -63,7 +63,7 @@ public class CentralServer extends Thread {
         	System.out.println("-------------------------------------------------------");
         	double startTime = System.currentTimeMillis();
         	
-        	while (timeElapsed < 50) {
+        	while (timeElapsed < 100) {
         		handleIncomingConnections();
         		timeElapsed = System.currentTimeMillis() - startTime;
         	}
